@@ -3,122 +3,58 @@
 import { useState, useEffect, useRef } from "react";
 
 // --- FECHAS CLAVE ---
-const picnicDate = new Date(2026, 3, 18, 0, 0, 0); // 18 de Abril de 2026
-const chapter1Date = new Date(2026, 4, 18, 12, 0, 0); // 18 de Mayo de 2026 a las 12:00 PM
-const chapter2Date = new Date(2026, 5, 18, 12, 0, 0); // 18 de Junio de 2026 a las 12:00 PM
-
-// --- COMPONENTE WHEEL ---
-const Wheel = ({ value, type, label, spinWheel }: { value: string, type: 'day' | 'month' | 'year', label: string, spinWheel: (type: 'day' | 'month' | 'year', direction: number) => void }) => (
-  <div className="flex flex-col items-center">
-    <button onClick={() => spinWheel(type, 1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mb-2 transition-all hover:-translate-y-1">▲</button>
-    <div className="bg-[#1a0d35] border border-[#c084fc] w-20 md:w-24 h-24 flex items-center justify-center rounded-xl relative shadow-[0_0_15px_rgba(192,132,252,0.3)]">
-      <span className="text-4xl md:text-5xl font-mono font-bold text-[#deff9a] z-10">{value}</span>
-    </div>
-    <button onClick={() => spinWheel(type, -1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mt-2 transition-all hover:translate-y-1">▼</button>
-    <span className="text-[#c084fc] text-[12px] font-bold tracking-widest mt-2">{label}</span>
-  </div>
-);
+// Las movemos fuera del componente para que React no las recree en cada render
+// y evitar warnings en los hooks useEffect.
+const picnicDate = new Date(2026, 3, 18, 0, 0, 0); // 18 de Abril de 2026 (Para el contador)
+const chapter1Date = new Date(2026, 4, 18, 0, 0, 0); // 18 de Mayo de 2026 (Desbloquea el Capítulo 1)
+const chapter2Date = new Date(2026, 5, 18, 0, 0, 0); // 18 de Junio de 2026 (Desbloquea el Capítulo 2)
 
 export default function RomanticWebsite() {
+  // --- ESTADO SECRETO DE ADMINISTRADOR ---
   const [modoEdicion, setModoEdicion] = useState(false);
+
+  // --- ESTADOS DEL CANDADO ---
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
   const [lockDay, setLockDay] = useState(15);
   const [lockMonth, setLockMonth] = useState(1);
   const [lockYear, setLockYear] = useState(2025);
 
+  // --- ESTADOS DE NAVEGACIÓN Y TIEMPO ---
   const [step, setStep] = useState(0);
   const [timeTogether, setTimeTogether] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [waitTimer, setWaitTimer] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [particles, setParticles] = useState<{ id: number; left: string; top: string; delay: string; duration: string; color: string }[]>([]);
-  const [treeHearts, setTreeHearts] = useState<{ id: number; x: number; y: number; color: string }[]>([]);
   
+  // Estados de validación de fechas reales
   const [canSeeChapter1, setCanSeeChapter1] = useState(false);
   const [canSeeChapter2, setCanSeeChapter2] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef(null);
 
-  // Generador de partículas ambientales e hiper-densidad del árbol
-  useEffect(() => {
-    const purpleShades = ['#a855f7', '#c084fc', '#e9d5ff', '#7e22ce', '#6b21a8', '#d8b4fe', '#581c87'];
-    
-    // 1. Lluvia de viento exterior
-    const generatedParticles = Array.from({ length: 300 }).map((_, i) => ({
-      id: i,
-      left: `${73 + (Math.random() * 14 - 7)}%`, 
-      top: `${33 + (Math.random() * 20 - 10)}%`,
-      delay: `${Math.random() * 15}s`,
-      duration: `${Math.random() * 5 + 4}s`,
-      color: purpleShades[Math.floor(Math.random() * purpleShades.length)]
-    }));
-    setParticles(generatedParticles);
-
-    // 2. MATRIZ MATEMÁTICA ULTRA TUPIDA PARA LA COPA
-    const heartsArray: { id: number; x: number; y: number; color: string }[] = [];
-    let count = 0;
-    
-    // Generamos una distribución en forma de corazón gigante / elipse ultra compacta
-    for (let angle = 0; angle < Math.PI * 2; angle += 0.035) { // Pasos ultra pequeños
-      for (let r = 5; r <= 55; r += 3.5) { // Múltiples capas concéntricas hiper pegadas
-        // Ecuación de dispersión para rellenar de forma masiva
-        const jitterX = (Math.random() * 6) - 3;
-        const jitterY = (Math.random() * 6) - 3;
-        
-        const x = 100 + r * Math.cos(angle) + jitterX;
-        // Ajuste sutil en Y para simular la forma orgánica y frondosa del árbol de la foto
-        const y = 78 + r * Math.sin(angle) * 0.9 + jitterY; 
-
-        // Limitar dentro del radio visual de la copa
-        if (y < 135 && y > 30 && x > 40 && x < 160) {
-          heartsArray.push({
-            id: count++,
-            x: parseFloat(x.toFixed(1)),
-            y: parseFloat(y.toFixed(1)),
-            color: purpleShades[Math.floor(Math.random() * purpleShades.length)]
-          });
-        }
-      }
-    }
-    setTreeHearts(heartsArray);
-  }, []);
-
+  // 1. Efecto para detectar si entraste con tu link secreto
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("admin") === "true") setModoEdicion(true);
+      // Si la URL termina en ?admin=true, se activa tu modo dios
+      if (params.get("admin") === "true") {
+        setModoEdicion(true);
+      }
     }
   }, []);
 
+  // 2. Verificador de fecha real
   useEffect(() => {
     const now = new Date();
+    // Usamos .getTime() para compatibilidad estricta con TypeScript
     if (now.getTime() >= chapter1Date.getTime()) setCanSeeChapter1(true);
     if (now.getTime() >= chapter2Date.getTime()) setCanSeeChapter2(true);
   }, []);
 
-  useEffect(() => {
-    if (canSeeChapter1 || modoEdicion) return;
-    const waitInterval = setInterval(() => {
-      const now = new Date();
-      const difference = chapter1Date.getTime() - now.getTime();
-      if (difference <= 0) {
-        setCanSeeChapter1(true);
-        clearInterval(waitInterval);
-      } else {
-        setWaitTimer({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        });
-      }
-    }, 1000);
-    return () => clearInterval(waitInterval);
-  }, [canSeeChapter1, modoEdicion]);
-
+  // Contador de tiempo
   useEffect(() => {
     if (!isUnlocked) return;
     const timer = setInterval(() => {
       const now = new Date();
+      // Corrección para error de TypeScript
       const difference = now.getTime() - picnicDate.getTime();
       setTimeTogether({
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -133,12 +69,12 @@ export default function RomanticWebsite() {
   const toggleMusic = () => {
     if (audioRef.current) {
       if (isPlaying) audioRef.current.pause();
-      else audioRef.current.play().catch((e: unknown) => console.log("Audio bloqueado", e));
+      else audioRef.current.play().catch((e) => console.log("Audio bloqueado", e));
       setIsPlaying(!isPlaying);
     }
   };
 
-  const spinWheel = (type: 'day' | 'month' | 'year', direction: number) => {
+  const spinWheel = (type, direction) => {
     if (type === 'day') setLockDay(prev => prev + direction > 31 ? 1 : prev + direction < 1 ? 31 : prev + direction);
     else if (type === 'month') setLockMonth(prev => prev + direction > 12 ? 1 : prev + direction < 1 ? 12 : prev + direction);
     else if (type === 'year') setLockYear(prev => prev + direction > 2030 ? 2020 : prev + direction < 2020 ? 2030 : prev + direction);
@@ -149,128 +85,27 @@ export default function RomanticWebsite() {
     else { setErrorMsg(true); setTimeout(() => setErrorMsg(false), 800); }
   };
 
+  const Wheel = ({ value, type, label }) => (
+    <div className="flex flex-col items-center">
+      <button onClick={() => spinWheel(type, 1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mb-2 transition-all hover:-translate-y-1">▲</button>
+      <div className="bg-[#1a0d35] border border-[#c084fc] w-20 md:w-24 h-24 flex items-center justify-center rounded-xl relative shadow-[0_0_15px_rgba(192,132,252,0.3)]">
+        <span className="text-4xl md:text-5xl font-mono font-bold text-[#deff9a] z-10">{value}</span>
+      </div>
+      <button onClick={() => spinWheel(type, -1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mt-2 transition-all hover:translate-y-1">▼</button>
+      <span className="text-[#c084fc] text-[12px] font-bold tracking-widest mt-2">{label}</span>
+    </div>
+  );
+
+  // --- PANTALLA 0: BLOQUEO TEMPORAL ---
   if (!canSeeChapter1 && !modoEdicion) {
     return (
-      <div className="min-h-screen bg-[#f5efe6] flex items-center justify-center p-4 md:p-10 relative overflow-hidden font-sans select-none">
-        
-        {/* Ligeramente más visible el borde morado */}
-        <div className="absolute inset-0 border-[16px] md:border-[32px] border-[#7e22ce] opacity-[0.06] pointer-events-none z-0" />
-
-        {/* Lluvia flotante exterior de micro corazones */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
-          {particles.map((p) => (
-            <span
-              key={p.id}
-              className="absolute animate-wind-purple-dense inline-block text-[7px] opacity-80"
-              style={{
-                left: p.left,
-                top: p.top,
-                animationDelay: p.delay,
-                animationDuration: p.duration,
-                color: p.color
-              }}
-            >
-              💜
-            </span>
-          ))}
-        </div>
-
-        {/* Tarjeta Principal */}
-        <div className="w-full max-w-5xl bg-[#fdfcf9] rounded-[3rem] border border-[#eae3da] shadow-[0_30px_70px_rgba(90,65,50,0.1)] overflow-hidden relative p-8 md:p-16 flex flex-col justify-between min-h-[580px] md:min-h-[660px] animate-pop-in">
-          
-          <div className="flex flex-col-reverse md:flex-row items-center md:items-start justify-between gap-10 flex-grow relative">
-            
-            <div className="flex-1 text-left space-y-8 max-w-xl z-10 md:pt-8">
-              {/* CAMBIO: Encabezado ahora es morado profundo */}
-              <h1 className="text-[#6b21a8] text-2xl md:text-3xl font-serif font-semibold tracking-wide">
-                Para el amor de mi vida:
-              </h1>
-              
-              <p className="text-[#5c463a] text-xl md:text-2xl font-serif leading-relaxed italic font-light">
-                Las mejores historias requieren paciencia, y la nuestra vale la pena la espera.
-              </p>
-              
-              <div className="pt-2">
-                <span className="inline-block text-[#6b21a8] text-xl md:text-2xl font-bold font-serif tracking-wide bg-[#f3e8ff] px-6 py-2.5 rounded-2xl border border-[#e9d5ff] shadow-sm animate-pulse">
-                  ¡Vuelve mañana, 18 de Mayo, para descubrirlo!
-                </span>
-              </div>
-            </div>
-
-            {/* Árbol con renderizado masivo */}
-            <div className="w-76 h-76 md:w-[26rem] md:h-[26rem] relative flex items-center justify-center flex-shrink-0 z-10 animate-gentle-sway">
-              <svg viewBox="0 0 200 200" className="w-full h-full filter drop-shadow-[0_15px_35px_rgba(126,34,206,0.25)]">
-                {/* Tronco */}
-                <path d="M94 185 C96 148 90 128 95 110 C96 100 103 95 105 85 L109 85 C108 97 104 103 105 113 C107 132 104 156 107 185 Z" fill="#4a2c1b" />
-                <path d="M96 113 C85 99 75 96 68 94" stroke="#4a2c1b" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
-                <path d="M104 109 C117 99 126 95 135 93" stroke="#4a2c1b" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
-                
-                {/* Copa Hiper-Tupida Generada */}
-                <g className="text-[12px] select-none">
-                  {/* CAMBIO: Aura morada trasera duplicada y más intensa */}
-                  <circle cx="100" cy="80" r="56" fill="#a855f7" opacity="0.35" filter="blur(20px)" />
-                  <circle cx="100" cy="80" r="40" fill="#7e22ce" opacity="0.25" filter="blur(15px)" />
-                  
-                  {/* Renderizado dinámico de cientos de corazones */}
-                  {treeHearts.map((heart) => (
-                    <text
-                      key={heart.id}
-                      x={heart.x}
-                      y={heart.y}
-                      fill={heart.color}
-                      className="opacity-95"
-                      style={{ transformOrigin: `${heart.x}px ${heart.y}px` }}
-                    >
-                      💜
-                    </text>
-                  ))}
-                </g>
-              </svg>
-            </div>
-          </div>
-
-          <div className="w-full mt-10 pt-6 border-t border-[#e6ded5] z-10">
-            <h3 className="text-[#6e584d] text-base md:text-lg font-medium tracking-wider mb-4 uppercase">
-              El candado se revelará en:
-            </h3>
-            
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[#2e1c15] font-serif">
-              {/* CAMBIO: Todos los números del contador ahora son morados */}
-              <div className="flex items-baseline gap-1">
-                <span className="font-mono font-bold text-3xl md:text-4xl text-[#7e22ce] tracking-tighter">
-                  {waitTimer.days.toString().padStart(2, '0')}
-                </span>
-                {/* CAMBIO: Etiquetas ahora son púrpuras grisáceas */}
-                <span className="text-[#9381ff] text-sm font-sans font-medium mr-2">días</span>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="font-mono font-bold text-3xl md:text-4xl text-[#7e22ce] tracking-tighter">
-                  {waitTimer.hours.toString().padStart(2, '0')}
-                </span>
-                <span className="text-[#9381ff] text-sm font-sans font-medium mr-2">horas</span>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="font-mono font-bold text-3xl md:text-4xl text-[#7e22ce] tracking-tighter">
-                  {waitTimer.minutes.toString().padStart(2, '0')}
-                </span>
-                <span className="text-[#9381ff] text-sm font-sans font-medium mr-2">minutos</span>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="font-mono font-bold text-3xl md:text-4xl text-[#7e22ce] tracking-tighter animate-pulse">
-                  {waitTimer.seconds.toString().padStart(2, '0')}
-                </span>
-                <span className="text-[#9381ff] text-sm font-sans font-medium">segundos</span>
-              </div>
-            </div>
-
-            <p className="text-[#947f73] text-sm mt-4 font-sans font-medium italic tracking-wide">
-              Mañana a las 12:00 PM
-            </p>
-          </div>
-
+      <div className="min-h-screen bg-[#0f0720] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(192,132,252,0.05)_0%,_transparent_70%)] z-0" />
+        <div className="z-10 bg-[#1a0d35]/50 border-2 border-dashed border-[#c084fc]/40 p-12 rounded-[3rem] text-center max-w-xl w-full animate-pop-in">
+          <div className="text-6xl mb-6 opacity-50 animate-float">⏳</div>
+          <h1 className="text-4xl font-serif text-[#f5f5f5] mb-4">Aún no es el momento...</h1>
+          <p className="text-[#daffde] text-lg mb-2">Este regalo está programado para abrirse en nuestra fecha especial.</p>
+          <p className="text-[#c084fc] text-lg font-bold">¡Vuelve mañana, 18 de Mayo, para descubrirlo!</p>
         </div>
       </div>
     );
@@ -282,6 +117,7 @@ export default function RomanticWebsite() {
       <div className="min-h-screen bg-[#0f0720] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(192,132,252,0.15)_0%,_transparent_70%)] z-0" />
         
+        {/* Indicador visual para que sepas que estás en tu link secreto */}
         {modoEdicion && (
           <div className="absolute top-4 left-4 bg-red-500/80 backdrop-blur-sm text-white px-4 py-1 rounded-full text-xs font-bold animate-pulse z-50 shadow-[0_0_10px_rgba(239,68,68,0.5)]">
             ⚠️ MODO EDICIÓN ACTIVO (URL SECRETA)
@@ -293,12 +129,12 @@ export default function RomanticWebsite() {
           <p className="text-[#daffde] mb-4 text-lg">Este diario contiene los momentos que han definido nuestro camino. Pero como todo gran tesoro, requiere de una llave especial.</p>
           <p className="text-[#c084fc] italic mb-10 font-serif">Pista: El día que me hiciste el hombre más feliz en el Parque de las Garzas.</p>
           
-          <div className={`flex justify-center items-center gap-4 mb-10 ${errorMsg ? 'animate-shake' : ''}`}>
-            <Wheel value={lockDay.toString().padStart(2, '0')} type="day" label="DÍA" spinWheel={spinWheel} />
+          <div className={`flex justify-center items-center gap-4 mb-10 ${errorMsg ? 'animate-shake border-red-500' : ''}`}>
+            <Wheel value={lockDay.toString().padStart(2, '0')} type="day" label="DÍA" />
             <span className="text-3xl text-[#c084fc] font-black mb-8">:</span>
-            <Wheel value={lockMonth.toString().padStart(2, '0')} type="month" label="MES" spinWheel={spinWheel} />
+            <Wheel value={lockMonth.toString().padStart(2, '0')} type="month" label="MES" />
             <span className="text-3xl text-[#c084fc] font-black mb-8">:</span>
-            <Wheel value={lockYear.toString()} type="year" label="AÑO" spinWheel={spinWheel} />
+            <Wheel value={lockYear.toString()} type="year" label="AÑO" />
           </div>
           <button onClick={handleUnlock} className="w-full bg-transparent border-2 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc] hover:text-[#0f0720] font-bold py-4 rounded-full text-xl uppercase tracking-widest transition-all">Abrir Diario 🔓</button>
         </div>
@@ -308,6 +144,7 @@ export default function RomanticWebsite() {
 
   // --- CONTENIDO DE LAS DIAPOSITIVAS ---
   const slidesContent = [
+    // Slide 1
     <div key="s1" className="flex flex-col items-center text-center animate-slide-in w-full max-w-3xl">
       <div className="inline-block px-5 py-1.5 rounded-full bg-[#c084fc]/20 border border-[#c084fc]/30 text-[#c084fc] text-[10px] font-bold tracking-[0.3em] uppercase mb-6 animate-pulse">Feliz Primer Mes</div>
       <h1 className="text-5xl md:text-7xl font-serif text-[#f5f5f5] mb-6">Bienvenida, <span className="text-[#deff9a]">mi Amor</span></h1>
@@ -315,6 +152,7 @@ export default function RomanticWebsite() {
       <p className="text-[#c084fc] text-lg italic">A partir de aquí, navegaremos por nuestra propia línea del tiempo.</p>
     </div>,
 
+    // Slide 2
     <div key="s1_video" className="flex flex-col items-center animate-slide-in w-full max-w-4xl">
       <h2 className="text-4xl font-serif text-[#c084fc] mb-4">Nuestra magia en <span className="text-[#deff9a]">movimiento</span></h2>
       <p className="text-[#daffde] mb-8 text-center text-lg">Porque hay miradas y risas que una foto no puede capturar del todo.</p>
@@ -323,6 +161,7 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
+    // Slide 3
     <div key="s2" className="flex flex-col md:flex-row items-center gap-10 animate-slide-in w-full max-w-5xl">
       <div className="flex-1">
         <h2 className="text-4xl font-serif text-[#c084fc] mb-2">El Reencuentro</h2>
@@ -335,6 +174,7 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
+    // Slide 4
     <div key="s3" className="flex flex-col md:flex-row-reverse items-center gap-10 animate-slide-in w-full max-w-5xl">
       <div className="flex-1">
         <h2 className="text-4xl font-serif text-[#c084fc] mb-2">Ese Beso Inolvidable</h2>
@@ -348,6 +188,7 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
+    // Slide 5
     <div key="s4" className="flex flex-col items-center text-center animate-slide-in w-full max-w-4xl">
       <h2 className="text-5xl font-serif text-[#c084fc] mb-2">Nuestra Fecha Oficial</h2>
       <h3 className="text-3xl text-[#deff9a] mb-8 font-bold">18 de Abril, 2026</h3>
@@ -356,6 +197,7 @@ export default function RomanticWebsite() {
       <p className="text-[#daffde] text-lg">Fue allí donde te pedí que fueras mi novia, y ese "sí" se convirtió en el sonido más bonito que he escuchado nunca.</p>
     </div>,
 
+    // Slide 6
     <div key="s5" className="flex flex-col md:flex-row items-center gap-12 animate-slide-in w-full max-w-5xl">
       <div className="flex-1 text-center">
         <div className="text-8xl md:text-9xl font-black text-[#c084fc] leading-none mb-2">{timeTogether.days}</div>
@@ -377,6 +219,7 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
+    // Slide 7
     <div key="s6" className="flex flex-col items-center animate-slide-in w-full max-w-5xl">
       <h2 className="text-4xl font-serif text-[#f5f5f5] mb-10">Por qué tú</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
@@ -394,12 +237,14 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
+    // Slide 8
     <div key="s7" className="flex flex-col items-center justify-center text-center animate-slide-in w-full max-w-3xl h-full">
       <div className="text-7xl text-[#c084fc] opacity-50 mb-4">"</div>
       <p className="font-serif text-3xl md:text-5xl italic text-[#f5f5f5] leading-snug mb-8">No buscaba a nadie, pero te vi y supe que eras tú.</p>
       <cite className="text-2xl text-[#deff9a] block">— Por siempre tuyo</cite>
     </div>,
 
+    // Slide 9: Capítulo 2 (Se salta el bloqueo si estás en Modo Edición)
     <div key="s8" className="flex flex-col items-center text-center animate-slide-in w-full max-w-4xl">
       {(canSeeChapter2 || modoEdicion) ? (
         <div className="bg-[#1a0d35] border border-[#deff9a]/50 p-10 rounded-[2rem] shadow-[0_0_30px_rgba(222,255,154,0.2)] relative">
@@ -414,7 +259,7 @@ export default function RomanticWebsite() {
           <div className="text-6xl mb-6 opacity-50">🔒</div>
           <h2 className="text-4xl font-serif text-[#f5f5f5] mb-4">¿Continuamos la historia?</h2>
           <p className="text-[#daffde] text-lg mb-2">Nuestra historia se actualiza cada día 18.</p>
-          <p className="text-[#c084fc] text-lg font-bold">Vuelve a escanear tu llave el 18 de Junio a las 12:00 PM.</p>
+          <p className="text-[#c084fc] text-lg font-bold">Vuelve a escanear tu llave el 18 de Junio.</p>
         </div>
       )}
     </div>
@@ -452,39 +297,17 @@ export default function RomanticWebsite() {
       </footer>
 
       <style dangerouslySetInnerHTML={{__html: `
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         @keyframes spin-slow { 100% { transform: rotate(360deg); } }
-        @keyframes pop-in { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
-        @keyframes slide-in { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes pop-in { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes slide-in { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
         
-        @keyframes gentle-sway {
-          0%, 100% { transform: rotate(0deg); }
-          50% { transform: rotate(0.6deg); }
-        }
-        
-        @keyframes wind-purple-dense {
-          0% {
-            transform: translate(0, 0) rotate(0deg);
-            opacity: 0;
-          }
-          10% {
-            opacity: 0.85;
-          }
-          45% {
-            transform: translate(-220px, -40px) rotate(180deg);
-          }
-          100% {
-            transform: translate(-650px, -110px) rotate(360deg);
-            opacity: 0;
-          }
-        }
-        
+        .animate-float { animation: float 4s ease-in-out infinite; }
         .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-        .animate-pop-in { animation: pop-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-pop-in { animation: pop-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .animate-slide-in { animation: slide-in 0.6s ease-out forwards; }
         .animate-shake { animation: shake 0.4s ease-in-out; }
-        .animate-gentle-sway { animation: gentle-sway 6s ease-in-out infinite; }
-        .animate-wind-purple-dense { animation: wind-purple-dense linear infinite; }
       `}} />
     </div>
   );
