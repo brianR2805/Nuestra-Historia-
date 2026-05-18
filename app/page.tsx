@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// --- FECHAS CLAVE ---
-const picnicDate = new Date(2026, 3, 18, 0, 0, 0); // 18 de Abril de 2026
-const chapter1Date = new Date(2026, 4, 18, 12, 0, 0); // 18 de Mayo de 2026 a las 12:00 PM
-const chapter2Date = new Date(2026, 5, 18, 12, 0, 0); // 18 de Junio de 2026 a las 12:00 PM
+// ============================================================================
+// 🔒 ZONA BLINDADA 1: CONFIGURACIONES Y COMPONENTES BASE (NO TOCAR)
+// ============================================================================
+const picnicDate = new Date(2026, 3, 18, 0, 0, 0); 
+const chapter1Date = new Date(2026, 4, 18, 12, 0, 0); 
+const chapter2Date = new Date(2026, 5, 18, 12, 0, 0); 
 
-// --- COMPONENTE WHEEL (Estilo claro con toques MORADOS) ---
 const Wheel = ({ value, type, label, spinWheel }: { value: string, type: 'day' | 'month' | 'year', label: string, spinWheel: (type: 'day' | 'month' | 'year', direction: number) => void }) => (
   <div className="flex flex-col items-center">
     <button onClick={() => spinWheel(type, 1)} className="text-[#a855f7] hover:text-[#d8b4fe] text-3xl mb-2 transition-all hover:-translate-y-1">▲</button>
@@ -19,6 +20,84 @@ const Wheel = ({ value, type, label, spinWheel }: { value: string, type: 'day' |
   </div>
 );
 
+// ============================================================================
+// 🔒 ZONA BLINDADA 2: PANTALLA DE ESPERA (YA QUEDÓ PERFECTA, NO TOCAR)
+// ============================================================================
+const PantallaEspera = ({ particles, treeHearts, waitTimer, esHoy }: any) => (
+  <div className="min-h-screen bg-[#f8f5f3] flex items-center justify-center p-4 md:p-8 relative font-serif select-none overflow-hidden">
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(168,85,247,0.03)_0%,_transparent_75%)] z-0" />
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, pointerEvents: 'none', overflow: 'hidden' }}>
+      {particles.map((p: any) => (
+        <span key={p.id} className="absolute animate-falling-hearts inline-block" style={{ left: p.left, top: p.top, animationDelay: p.delay, animationDuration: p.duration, color: p.color, fontSize: p.size, opacity: p.opacity }}>♥</span>
+      ))}
+    </div>
+    <div className="w-full max-w-4xl bg-white rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.06)] border border-[#a855f7]/10 relative p-8 md:p-14 flex flex-col z-10">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-10">
+        <div className="flex-1 text-left space-y-6 md:pt-6">
+          <h1 className="text-[#3f2a2a] text-3xl md:text-4xl font-medium tracking-wide">Para el amor de mi vida:</h1>
+          <p className="text-[#3f2a2a] text-xl md:text-2xl italic leading-relaxed">Las mejores historias requieren paciencia, y la nuestra vale la pena la espera.</p>
+          <p className="text-[#9333ea] text-xl md:text-2xl font-bold tracking-wide pt-2">{esHoy ? "¡Vuelve hoy a las 12:00 PM para descubrirlo!" : "¡Vuelve mañana, 18 de Mayo, para descubrirlo!"}</p>
+        </div>
+        <div className="w-72 h-72 md:w-[26rem] md:h-[26rem] relative flex items-center justify-center flex-shrink-0 animate-gentle-sway">
+          <svg viewBox="0 0 200 200" className="w-full h-full overflow-visible">
+            <circle cx="100" cy="80" r="75" fill="#f3e8ff" opacity="0.8" filter="blur(15px)" />
+            <path d="M92 185 L96 90 L104 90 L108 185 Z" fill="#6b4226" />
+            <path d="M100 115 L70 85" stroke="#6b4226" strokeWidth="5" strokeLinecap="round" />
+            <path d="M100 100 L135 65" stroke="#6b4226" strokeWidth="4.5" strokeLinecap="round" />
+            <path d="M115 80 L145 95" stroke="#6b4226" strokeWidth="3" strokeLinecap="round" />
+            <g className="select-none">
+              {treeHearts.map((heart: any) => (
+                <text key={heart.id} x={heart.x} y={heart.y} fill={heart.color} className="opacity-95" style={{ transformOrigin: `${heart.x}px ${heart.y}px`, transform: `scale(${heart.scale})` }}>♥</text>
+              ))}
+            </g>
+          </svg>
+        </div>
+      </div>
+      <hr className="border-[#ebe1e1] my-8 md:my-10" />
+      <div className="w-full">
+        <h3 className="text-[#594646] text-lg font-sans mb-4">El candado se revelará en:</h3>
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 font-sans">
+          {waitTimer.days > 0 && (
+            <div className="flex items-baseline gap-1"><span className="font-bold text-4xl md:text-5xl text-black tracking-tight">{waitTimer.days.toString().padStart(2, '0')}</span><span className="text-[#594646] text-sm md:text-base mr-2">días</span></div>
+          )}
+          <div className="flex items-baseline gap-1"><span className="font-bold text-4xl md:text-5xl text-black tracking-tight">{waitTimer.hours.toString().padStart(2, '0')}</span><span className="text-[#594646] text-sm md:text-base mr-2">horas</span></div>
+          <div className="flex items-baseline gap-1"><span className="font-bold text-4xl md:text-5xl text-black tracking-tight">{waitTimer.minutes.toString().padStart(2, '0')}</span><span className="text-[#594646] text-sm md:text-base mr-2">minutos</span></div>
+          <div className="flex items-baseline gap-1"><span className="font-bold text-4xl md:text-5xl text-[#7e22ce] tracking-tight animate-pulse">{waitTimer.seconds.toString().padStart(2, '0')}</span><span className="text-[#594646] text-sm md:text-base">segundos</span></div>
+        </div>
+        <p className="text-[#886a6a] text-sm md:text-base mt-4 font-sans italic">{esHoy ? "Hoy a las 12:00 PM" : "Mañana a las 12:00 PM"}</p>
+      </div>
+    </div>
+    <style dangerouslySetInnerHTML={{__html: `@keyframes falling-hearts { 0% { transform: translateY(-10vh) rotate(0deg) scale(0.8); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 0.8; } 100% { transform: translateY(110vh) rotate(60deg) scale(1.1); opacity: 0; } } @keyframes gentle-sway { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(0.6deg); } } .animate-falling-hearts { animation: falling-hearts linear infinite; } .animate-gentle-sway { animation: gentle-sway 6s ease-in-out infinite; }`}} />
+  </div>
+);
+
+// ============================================================================
+// 🔒 ZONA BLINDADA 3: PANTALLA DEL CANDADO (YA QUEDÓ PERFECTA, NO TOCAR)
+// ============================================================================
+const PantallaCandado = ({ modoEdicion, lockDay, lockMonth, lockYear, spinWheel, handleUnlock, errorMsg }: any) => (
+  <div className="min-h-screen bg-[#f8f5f3] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans select-none">
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(168,85,247,0.05)_0%,_transparent_70%)] z-0" />
+    {modoEdicion && <div className="absolute top-4 left-4 bg-red-600 text-white px-4 py-1 rounded-full text-xs font-bold animate-pulse z-50">⚠️ MODO EDICIÓN ACTIVO</div>}
+    <div className="z-10 bg-white border border-[#a855f7]/20 p-8 md:p-12 rounded-[2rem] shadow-xl text-center max-w-2xl w-full animate-pop-in">
+      <h1 className="text-4xl md:text-5xl font-serif text-[#3f2a2a] mb-4">La Llave de <span className="text-[#a855f7]">Nosotros</span></h1>
+      <p className="text-[#594646] mb-4 text-lg">Este diario contiene los momentos que han definido nuestro camino. Pero como todo gran tesoro, requiere de una llave especial.</p>
+      <p className="text-[#9333ea] italic mb-10 font-serif">Pista: El día que me hiciste el hombre más feliz en el Parque de las Garzas.</p>
+      <div className={`flex justify-center items-center gap-4 mb-10 ${errorMsg ? 'animate-shake' : ''}`}>
+        <Wheel value={lockDay.toString().padStart(2, '0')} type="day" label="DÍA" spinWheel={spinWheel} />
+        <span className="text-3xl text-[#a855f7] font-black mb-8">:</span>
+        <Wheel value={lockMonth.toString().padStart(2, '0')} type="month" label="MES" spinWheel={spinWheel} />
+        <span className="text-3xl text-[#a855f7] font-black mb-8">:</span>
+        <Wheel value={lockYear.toString()} type="year" label="AÑO" spinWheel={spinWheel} />
+      </div>
+      <button onClick={handleUnlock} className="w-full bg-[#f3e8ff] border-2 border-[#a855f7] text-[#a855f7] hover:bg-[#a855f7] hover:text-white font-bold py-4 rounded-full text-xl uppercase tracking-widest transition-all">Abrir Diario 🔓</button>
+    </div>
+    <style dangerouslySetInnerHTML={{__html: `@keyframes pop-in { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } } @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } } .animate-pop-in { animation: pop-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; } .animate-shake { animation: shake 0.4s ease-in-out; }`}} />
+  </div>
+);
+
+// ============================================================================
+// 🟢 A PARTIR DE AQUÍ COMIENZA LA APLICACIÓN PRINCIPAL
+// ============================================================================
 export default function RomanticWebsite() {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -41,72 +120,25 @@ export default function RomanticWebsite() {
   const [canSeeChapter2, setCanSeeChapter2] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // MANTENIDO: Paleta de corazones MORADOS/VIOLETAS
   useEffect(() => {
-    const purpleVioletShades = [
-        '#6d28d9', // violet-700
-        '#7e22ce', // purple-700
-        '#8b5cf6', // violet-500
-        '#a855f7', // purple-500
-        '#c084fc', // purple-400
-        '#d8b4fe', // purple-300
-        '#7c3aed', // violet-600
-        '#9333ea', // purple-600
-    ];
-    
-    // Lluvia masiva de corazones morados
+    const purpleVioletShades = ['#6d28d9', '#7e22ce', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe', '#7c3aed', '#9333ea'];
     const generatedParticles = Array.from({ length: 450 }).map((_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      top: `${-20 + Math.random() * 40}vh`,
-      delay: `${Math.random() * 15}s`,
-      duration: `${Math.random() * 10 + 7}s`,
-      color: purpleVioletShades[Math.floor(Math.random() * purpleVioletShades.length)],
-      size: `${Math.random() * 15 + 8}px`,
-      opacity: Math.random() * 0.7 + 0.3
+      id: i, left: `${Math.random() * 100}%`, top: `${-20 + Math.random() * 40}vh`, delay: `${Math.random() * 15}s`, duration: `${Math.random() * 10 + 7}s`, color: purpleVioletShades[Math.floor(Math.random() * purpleVioletShades.length)], size: `${Math.random() * 15 + 8}px`, opacity: Math.random() * 0.7 + 0.3
     }));
     setParticles(generatedParticles);
 
-    // Corazones del Árbol morados
     const heartsArray: { id: number; x: number; y: number; color: string; scale: number }[] = [];
     let count = 0;
-    
     for (let i = 0; i < 400; i++) {
-      const t = Math.random() * Math.PI * 2;
-      const d = Math.sqrt(Math.random()); 
-      const scale = 3.5;
-
-      const hx = 16 * Math.pow(Math.sin(t), 3);
-      const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-
-      const x = 100 + d * scale * hx + (Math.random() - 0.5) * 4; 
-      const y = 65 - d * scale * hy + (Math.random() - 0.5) * 4; 
-
-      heartsArray.push({
-        id: count++,
-        x: parseFloat(x.toFixed(1)),
-        y: parseFloat(y.toFixed(1)),
-        color: purpleVioletShades[Math.floor(Math.random() * purpleVioletShades.length)],
-        scale: Math.random() * 0.6 + 0.8 
-      });
+      const t = Math.random() * Math.PI * 2; const d = Math.sqrt(Math.random()); const scale = 3.5;
+      const hx = 16 * Math.pow(Math.sin(t), 3); const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      const x = 100 + d * scale * hx + (Math.random() - 0.5) * 4; const y = 65 - d * scale * hy + (Math.random() - 0.5) * 4; 
+      heartsArray.push({ id: count++, x: parseFloat(x.toFixed(1)), y: parseFloat(y.toFixed(1)), color: purpleVioletShades[Math.floor(Math.random() * purpleVioletShades.length)], scale: Math.random() * 0.6 + 0.8 });
     }
-
     for (let i = 0; i < 50; i++) {
-      const bx = 100 + (Math.random() - 0.5) * 70; 
-      const dist = Math.abs(bx - 100);
-      const by = 185 - Math.random() * (15 - dist * 0.25); 
-
-      if (by > 175) {
-        heartsArray.push({
-          id: count++,
-          x: parseFloat(bx.toFixed(1)),
-          y: parseFloat(by.toFixed(1)),
-          color: purpleVioletShades[Math.floor(Math.random() * purpleVioletShades.length)],
-          scale: Math.random() * 0.4 + 0.6
-        });
-      }
+      const bx = 100 + (Math.random() - 0.5) * 70; const dist = Math.abs(bx - 100); const by = 185 - Math.random() * (15 - dist * 0.25); 
+      if (by > 175) { heartsArray.push({ id: count++, x: parseFloat(bx.toFixed(1)), y: parseFloat(by.toFixed(1)), color: purpleVioletShades[Math.floor(Math.random() * purpleVioletShades.length)], scale: Math.random() * 0.4 + 0.6 }); }
     }
-
     setTreeHearts(heartsArray);
   }, []);
 
@@ -121,10 +153,7 @@ export default function RomanticWebsite() {
     const now = new Date();
     if (now.getTime() >= chapter1Date.getTime()) setCanSeeChapter1(true);
     if (now.getTime() >= chapter2Date.getTime()) setCanSeeChapter2(true);
-    
-    if (now.getDate() === chapter1Date.getDate() && now.getMonth() === chapter1Date.getMonth() && now.getFullYear() === chapter1Date.getFullYear()) {
-      setEsHoy(true);
-    }
+    if (now.getDate() === chapter1Date.getDate() && now.getMonth() === chapter1Date.getMonth() && now.getFullYear() === chapter1Date.getFullYear()) { setEsHoy(true); }
   }, []);
 
   useEffect(() => {
@@ -132,21 +161,9 @@ export default function RomanticWebsite() {
     const waitInterval = setInterval(() => {
       const now = new Date();
       const difference = chapter1Date.getTime() - now.getTime();
-      
-      if (now.getDate() === chapter1Date.getDate()) {
-        setEsHoy(true);
-      }
-
-      if (difference <= 0) {
-        setCanSeeChapter1(true);
-        clearInterval(waitInterval);
-      } else {
-        setWaitTimer({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        });
+      if (now.getDate() === chapter1Date.getDate()) { setEsHoy(true); }
+      if (difference <= 0) { setCanSeeChapter1(true); clearInterval(waitInterval); } else {
+        setWaitTimer({ days: Math.floor(difference / (1000 * 60 * 60 * 24)), hours: Math.floor((difference / (1000 * 60 * 60)) % 24), minutes: Math.floor((difference / 1000 / 60) % 60), seconds: Math.floor((difference / 1000) % 60) });
       }
     }, 1000);
     return () => clearInterval(waitInterval);
@@ -157,12 +174,7 @@ export default function RomanticWebsite() {
     const timer = setInterval(() => {
       const now = new Date();
       const difference = now.getTime() - picnicDate.getTime();
-      setTimeTogether({
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60)
-      });
+      setTimeTogether({ days: Math.floor(difference / (1000 * 60 * 60 * 24)), hours: Math.floor((difference / (1000 * 60 * 60)) % 24), minutes: Math.floor((difference / 1000 / 60) % 60), seconds: Math.floor((difference / 1000) % 60) });
     }, 1000);
     return () => clearInterval(timer);
   }, [isUnlocked]);
@@ -186,191 +198,19 @@ export default function RomanticWebsite() {
     else { setErrorMsg(true); setTimeout(() => setErrorMsg(false), 800); }
   };
 
-  // --- PANTALLA 0: ESPERA (RESTURADA A ESTILO CLARO/FOTO, textos MORADOS) ---
+  // LLAMADA A LA PANTALLA DE ESPERA BLINDADA
   if (!canSeeChapter1 && !modoEdicion) {
-    return (
-      <div className="min-h-screen bg-[#f8f5f3] flex items-center justify-center p-4 md:p-8 relative font-serif select-none overflow-hidden">
-        
-        {/* Fondo sutil claro con toque morado */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(168,85,247,0.03)_0%,_transparent_75%)] z-0" />
-
-        {/* LLUVIA DE CORAZONES MORADOS AL FRENTE */}
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, pointerEvents: 'none', overflow: 'hidden' }}>
-          {particles.map((p) => (
-            <span
-              key={p.id}
-              className="absolute animate-falling-hearts inline-block"
-              style={{
-                left: p.left,
-                top: p.top,
-                animationDelay: p.delay,
-                animationDuration: p.duration,
-                color: p.color,
-                fontSize: p.size,
-                opacity: p.opacity
-              }}
-            >
-              ♥
-            </span>
-          ))}
-        </div>
-
-        {/* Tarjeta principal (Blanca como en la foto original) */}
-        <div className="w-full max-w-4xl bg-white rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.06)] border border-[#a855f7]/10 relative p-8 md:p-14 flex flex-col z-10">
-          
-          <div className="flex flex-col md:flex-row items-center justify-between gap-10">
-            <div className="flex-1 text-left space-y-6 md:pt-6">
-              <h1 className="text-[#3f2a2a] text-3xl md:text-4xl font-medium tracking-wide">
-                Para el amor de mi vida:
-              </h1>
-              
-              <p className="text-[#3f2a2a] text-xl md:text-2xl italic leading-relaxed">
-                Las mejores historias requieren paciencia, y la nuestra vale la pena la espera.
-              </p>
-              
-              {/* Texto de aviso MORADO */}
-              <p className="text-[#9333ea] text-xl md:text-2xl font-bold tracking-wide pt-2">
-                {esHoy ? "¡Vuelve hoy a las 12:00 PM para descubrirlo!" : "¡Vuelve mañana, 18 de Mayo, para descubrirlo!"}
-              </p>
-            </div>
-
-            {/* ÁRBOL (Tronco café café café claro, hojas moradas) */}
-            <div className="w-72 h-72 md:w-[26rem] md:h-[26rem] relative flex items-center justify-center flex-shrink-0 animate-gentle-sway">
-              <svg viewBox="0 0 200 200" className="w-full h-full overflow-visible">
-                {/* Resplandor trasero suave morado */}
-                <circle cx="100" cy="80" r="75" fill="#f3e8ff" opacity="0.8" filter="blur(15px)" />
-                
-                {/* Tronco café claro original */}
-                <path d="M92 185 L96 90 L104 90 L108 185 Z" fill="#6b4226" />
-                <path d="M100 115 L70 85" stroke="#6b4226" strokeWidth="5" strokeLinecap="round" />
-                <path d="M100 100 L135 65" stroke="#6b4226" strokeWidth="4.5" strokeLinecap="round" />
-                <path d="M115 80 L145 95" stroke="#6b4226" strokeWidth="3" strokeLinecap="round" />
-                
-                {/* Hojas / Corazones (Ahora morados por el useEffect) */}
-                <g className="select-none">
-                  {treeHearts.map((heart) => (
-                    <text
-                      key={heart.id}
-                      x={heart.x}
-                      y={heart.y}
-                      fill={heart.color}
-                      className="opacity-95"
-                      style={{ 
-                        transformOrigin: `${heart.x}px ${heart.y}px`,
-                        transform: `scale(${heart.scale})`
-                      }}
-                    >
-                      ♥
-                    </text>
-                  ))}
-                </g>
-              </svg>
-            </div>
-          </div>
-
-          <hr className="border-[#ebe1e1] my-8 md:my-10" />
-
-          <div className="w-full">
-            <h3 className="text-[#594646] text-lg font-sans mb-4">
-              El candado se revelará en:
-            </h3>
-            
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 font-sans">
-              {waitTimer.days > 0 && (
-                <div className="flex items-baseline gap-1">
-                  <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
-                    {waitTimer.days.toString().padStart(2, '0')}
-                  </span>
-                  <span className="text-[#594646] text-sm md:text-base mr-2">días</span>
-                </div>
-              )}
-
-              <div className="flex items-baseline gap-1">
-                <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
-                  {waitTimer.hours.toString().padStart(2, '0')}
-                </span>
-                <span className="text-[#594646] text-sm md:text-base mr-2">horas</span>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
-                  {waitTimer.minutes.toString().padStart(2, '0')}
-                </span>
-                <span className="text-[#594646] text-sm md:text-base mr-2">minutos</span>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                {/* Segundos y textos hint MORADOS */}
-                <span className="font-bold text-4xl md:text-5xl text-[#7e22ce] tracking-tight animate-pulse">
-                  {waitTimer.seconds.toString().padStart(2, '0')}
-                </span>
-                <span className="text-[#594646] text-sm md:text-base">segundos</span>
-              </div>
-            </div>
-
-            <p className="text-[#886a6a] text-sm md:text-base mt-4 font-sans italic">
-              {esHoy ? "Hoy a las 12:00 PM" : "Mañana a las 12:00 PM"}
-            </p>
-          </div>
-
-        </div>
-        
-        <style dangerouslySetInnerHTML={{__html: `
-          @keyframes falling-hearts {
-            0% { transform: translateY(-10vh) rotate(0deg) scale(0.8); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 0.8; }
-            100% { transform: translateY(110vh) rotate(60deg) scale(1.1); opacity: 0; }
-          }
-          @keyframes gentle-sway {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(0.6deg); }
-          }
-          .animate-falling-hearts { animation: falling-hearts linear infinite; }
-          .animate-gentle-sway { animation: gentle-sway 6s ease-in-out infinite; }
-        `}} />
-      </div>
-    );
+    return <PantallaEspera particles={particles} treeHearts={treeHearts} waitTimer={waitTimer} esHoy={esHoy} />;
   }
 
-  // --- PANTALLA 1: CANDADO (Estilo claro con toques MORADOS) ---
+  // LLAMADA A LA PANTALLA DE CANDADO BLINDADA
   if (!isUnlocked) {
-    return (
-      <div className="min-h-screen bg-[#f8f5f3] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans select-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(168,85,247,0.05)_0%,_transparent_70%)] z-0" />
-        
-        {modoEdicion && (
-          <div className="absolute top-4 left-4 bg-red-600 text-white px-4 py-1 rounded-full text-xs font-bold animate-pulse z-50">
-            ⚠️ MODO EDICIÓN ACTIVO
-          </div>
-        )}
-
-        <div className="z-10 bg-white border border-[#a855f7]/20 p-8 md:p-12 rounded-[2rem] shadow-xl text-center max-w-2xl w-full animate-pop-in">
-          <h1 className="text-4xl md:text-5xl font-serif text-[#3f2a2a] mb-4">La Llave de <span className="text-[#a855f7]">Nosotros</span></h1>
-          <p className="text-[#594646] mb-4 text-lg">Este diario contiene los momentos que han definido nuestro camino. Pero como todo gran tesoro, requiere de una llave especial.</p>
-          <p className="text-[#9333ea] italic mb-10 font-serif">Pista: El día que me hiciste el hombre más feliz en el Parque de las Garzas.</p>
-          
-          <div className={`flex justify-center items-center gap-4 mb-10 ${errorMsg ? 'animate-shake' : ''}`}>
-            <Wheel value={lockDay.toString().padStart(2, '0')} type="day" label="DÍA" spinWheel={spinWheel} />
-            <span className="text-3xl text-[#a855f7] font-black mb-8">:</span>
-            <Wheel value={lockMonth.toString().padStart(2, '0')} type="month" label="MES" spinWheel={spinWheel} />
-            <span className="text-3xl text-[#a855f7] font-black mb-8">:</span>
-            <Wheel value={lockYear.toString()} type="year" label="AÑO" spinWheel={spinWheel} />
-          </div>
-          <button onClick={handleUnlock} className="w-full bg-[#f3e8ff] border-2 border-[#a855f7] text-[#a855f7] hover:bg-[#a855f7] hover:text-white font-bold py-4 rounded-full text-xl uppercase tracking-widest transition-all">Abrir Diario 🔓</button>
-        </div>
-
-        <style dangerouslySetInnerHTML={{__html: `
-          @keyframes pop-in { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
-          @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-          .animate-pop-in { animation: pop-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-          .animate-shake { animation: shake 0.4s ease-in-out; }
-        `}} />
-      </div>
-    );
+    return <PantallaCandado modoEdicion={modoEdicion} lockDay={lockDay} lockMonth={lockMonth} lockYear={lockYear} spinWheel={spinWheel} handleUnlock={handleUnlock} errorMsg={errorMsg} />;
   }
 
-  // --- CONTENIDO DE LAS DIAPOSITIVAS (Estilo claro adaptado con textos MORADOS) ---
+  // ============================================================================
+  // 🟢 ZONA DE EDICIÓN: AQUÍ PUEDES MODIFICAR, AGREGAR O QUITAR DIAPOSITIVAS
+  // ============================================================================
   const slidesContent = [
     <div key="s1" className="flex flex-col items-center text-center animate-slide-in w-full max-w-3xl">
       <div className="inline-block px-5 py-1.5 rounded-full bg-[#a855f7]/10 border border-[#a855f7]/30 text-[#a855f7] text-[10px] font-bold tracking-[0.3em] uppercase mb-6 animate-pulse">Feliz Primer Mes</div>
@@ -422,7 +262,6 @@ export default function RomanticWebsite() {
 
     <div key="s5" className="flex flex-col md:flex-row items-center gap-12 animate-slide-in w-full max-w-5xl">
       <div className="flex-1 text-center">
-        {/* Número grande MORADO */}
         <div className="text-8xl md:text-9xl font-black text-[#a855f7] leading-none mb-2 drop-shadow-sm">{timeTogether.days}</div>
         <div className="text-2xl text-[#3f2a2a] tracking-widest uppercase font-bold mb-4">Días de Felicidad</div>
         <p className="text-[#9333ea] text-sm">Y {timeTogether.hours} horas con {timeTogether.minutes} minutos.</p>
@@ -434,7 +273,6 @@ export default function RomanticWebsite() {
             <div key={i} className="flex items-center gap-4">
               <span className="w-20 text-right text-[#594646] font-bold">{bar.label}</span>
               <div className="flex-grow h-6 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
-                {/* Degradado morado */}
                 <div className="h-full bg-gradient-to-r from-[#d8b4fe] to-[#9333ea]" style={{ width: bar.w }}></div>
               </div>
             </div>
