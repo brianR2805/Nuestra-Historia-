@@ -35,7 +35,7 @@ const PantallaEspera = ({ particles, treeHearts, waitTimer, esHoy }: any) => (
       <div className="flex flex-col md:flex-row items-center justify-between gap-10">
         <div className="flex-1 text-left space-y-6 md:pt-6">
           <h1 className="text-[#3f2a2a] text-3xl md:text-4xl font-medium tracking-wide">Para el amor de mi vida:</h1>
-          <p className="text-[#3f2a2a] text-xl md:text-2xl italic leading-relaxed">Las mejores historias requieren paciencia, y la nuestra vale la pena la espera.</p>
+          <p className="text-[#3f2a2a] text-xl md:text-2xl italic leading-relaxed">Las mejores historias requieren paciencia y la nuestra vale la pena la espera.</p>
           <p className="text-[#9333ea] text-xl md:text-2xl font-bold tracking-wide pt-2">{esHoy ? "¡Vuelve hoy a las 12:00 PM para descubrirlo!" : "¡Vuelve mañana, 18 de Mayo, para descubrirlo!"}</p>
         </div>
         <div className="w-72 h-72 md:w-[26rem] md:h-[26rem] relative flex items-center justify-center flex-shrink-0 animate-gentle-sway">
