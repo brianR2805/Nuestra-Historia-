@@ -31,79 +31,54 @@ export default function RomanticWebsite() {
   const [timeTogether, setTimeTogether] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [waitTimer, setWaitTimer] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isPlaying, setIsPlaying] = useState(false);
-  
-  const [esHoy, setEsHoy] = useState(false);
-  
-  const [particles, setParticles] = useState<{ id: number; left: string; top: string; delay: string; duration: string; color: string; size: string; opacity: number }[]>([]);
-  const [treeHearts, setTreeHearts] = useState<{ id: number; x: number; y: number; color: string; scale: number }[]>([]);
+  const [particles, setParticles] = useState<{ id: number; left: string; top: string; delay: string; duration: string; color: string }[]>([]);
+  const [treeHearts, setTreeHearts] = useState<{ id: number; x: number; y: number; color: string }[]>([]);
   
   const [canSeeChapter1, setCanSeeChapter1] = useState(false);
   const [canSeeChapter2, setCanSeeChapter2] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Generador de partículas y árbol 
+  // Generador de partículas ambientales e hiper-densidad del árbol
   useEffect(() => {
-    const pinkRedShades = ['#ef4444', '#ec4899', '#f43f5e', '#e11d48', '#be185d', '#ff1493', '#db2777', '#9d174d'];
+    const purpleShades = ['#a855f7', '#c084fc', '#e9d5ff', '#7e22ce', '#6b21a8', '#d8b4fe', '#581c87'];
     
-    // 1. LLUVIA MASIVA DE CORAZONES EN TODA LA PANTALLA
-    const generatedParticles = Array.from({ length: 450 }).map((_, i) => ({
+    // 1. Lluvia de viento exterior
+    const generatedParticles = Array.from({ length: 300 }).map((_, i) => ({
       id: i,
-      left: `${Math.random() * 100}%`,
-      top: `${-20 + Math.random() * 40}vh`,
+      left: `${73 + (Math.random() * 14 - 7)}%`, 
+      top: `${33 + (Math.random() * 20 - 10)}%`,
       delay: `${Math.random() * 15}s`,
-      duration: `${Math.random() * 10 + 7}s`,
-      color: pinkRedShades[Math.floor(Math.random() * pinkRedShades.length)],
-      size: `${Math.random() * 15 + 8}px`,
-      opacity: Math.random() * 0.5 + 0.3
+      duration: `${Math.random() * 5 + 4}s`,
+      color: purpleShades[Math.floor(Math.random() * purpleShades.length)]
     }));
     setParticles(generatedParticles);
 
-    // 2. CORAZONES DEL ÁRBOL (Formando un corazón perfecto usando ecuaciones matemáticas)
-    const heartsArray: { id: number; x: number; y: number; color: string; scale: number }[] = [];
+    // 2. MATRIZ MATEMÁTICA ULTRA TUPIDA PARA LA COPA
+    const heartsArray: { id: number; x: number; y: number; color: string }[] = [];
     let count = 0;
     
-    // Follaje superior (Forma de corazón MÁS GRANDE)
-    // Aumentamos el número de corazones a 500 para cubrir el área más grande
-    for (let i = 0; i < 500; i++) {
-      const t = Math.random() * Math.PI * 2;
-      const d = Math.sqrt(Math.random()); // Distribución uniforme dentro del corazón
-      // Aumentamos la escala de 3.5 a 4.0
-      const scale = 4.0;
+    // Generamos una distribución en forma de corazón gigante / elipse ultra compacta
+    for (let angle = 0; angle < Math.PI * 2; angle += 0.035) { // Pasos ultra pequeños
+      for (let r = 5; r <= 55; r += 3.5) { // Múltiples capas concéntricas hiper pegadas
+        // Ecuación de dispersión para rellenar de forma masiva
+        const jitterX = (Math.random() * 6) - 3;
+        const jitterY = (Math.random() * 6) - 3;
+        
+        const x = 100 + r * Math.cos(angle) + jitterX;
+        // Ajuste sutil en Y para simular la forma orgánica y frondosa del árbol de la foto
+        const y = 78 + r * Math.sin(angle) * 0.9 + jitterY; 
 
-      // Ecuación paramétrica del corazón
-      const hx = 16 * Math.pow(Math.sin(t), 3);
-      const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-
-      // Centro del corazón ajustado. X=100 se mantiene, Y baja ligeramente a 55 para compensar el tamaño
-      const x = 100 + d * scale * hx + (Math.random() - 0.5) * 4; 
-      const y = 55 - d * scale * hy + (Math.random() - 0.5) * 4; // Restamos porque SVG Y va hacia abajo
-
-      heartsArray.push({
-        id: count++,
-        x: parseFloat(x.toFixed(1)),
-        y: parseFloat(y.toFixed(1)),
-        color: pinkRedShades[Math.floor(Math.random() * pinkRedShades.length)],
-        scale: Math.random() * 0.6 + 0.8 // Escala variada para dar textura
-      });
-    }
-
-    // Corazones caídos en la base del tronco
-    for (let i = 0; i < 50; i++) {
-      const bx = 100 + (Math.random() - 0.5) * 70; // Desplazamiento horizontal
-      const dist = Math.abs(bx - 100);
-      const by = 185 - Math.random() * (15 - dist * 0.25); // Forma un montículo
-
-      if (by > 175) {
-        heartsArray.push({
-          id: count++,
-          x: parseFloat(bx.toFixed(1)),
-          y: parseFloat(by.toFixed(1)),
-          color: pinkRedShades[Math.floor(Math.random() * pinkRedShades.length)],
-          scale: Math.random() * 0.4 + 0.6
-        });
+        // Limitar dentro del radio visual de la copa
+        if (y < 135 && y > 30 && x > 40 && x < 160) {
+          heartsArray.push({
+            id: count++,
+            x: parseFloat(x.toFixed(1)),
+            y: parseFloat(y.toFixed(1)),
+            color: purpleShades[Math.floor(Math.random() * purpleShades.length)]
+          });
+        }
       }
     }
-
     setTreeHearts(heartsArray);
   }, []);
 
@@ -118,10 +93,6 @@ export default function RomanticWebsite() {
     const now = new Date();
     if (now.getTime() >= chapter1Date.getTime()) setCanSeeChapter1(true);
     if (now.getTime() >= chapter2Date.getTime()) setCanSeeChapter2(true);
-    
-    if (now.getDate() === chapter1Date.getDate() && now.getMonth() === chapter1Date.getMonth() && now.getFullYear() === chapter1Date.getFullYear()) {
-      setEsHoy(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -129,11 +100,6 @@ export default function RomanticWebsite() {
     const waitInterval = setInterval(() => {
       const now = new Date();
       const difference = chapter1Date.getTime() - now.getTime();
-      
-      if (now.getDate() === chapter1Date.getDate()) {
-        setEsHoy(true);
-      }
-
       if (difference <= 0) {
         setCanSeeChapter1(true);
         clearInterval(waitInterval);
@@ -183,77 +149,79 @@ export default function RomanticWebsite() {
     else { setErrorMsg(true); setTimeout(() => setErrorMsg(false), 800); }
   };
 
-  // --- PANTALLA 0: ESPERA ---
   if (!canSeeChapter1 && !modoEdicion) {
     return (
-      <div className="min-h-screen bg-[#f7f3ed] flex items-center justify-center p-4 md:p-8 relative font-serif select-none">
+      <div className="min-h-screen bg-[#f5efe6] flex items-center justify-center p-4 md:p-10 relative overflow-hidden font-sans select-none">
         
-        {/* LLUVIA FORZADA AL FRENTE (z-[9999]) PARA QUE CUBRA TODO EL ANCHO SIN SER TAPADA */}
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, pointerEvents: 'none', overflow: 'hidden' }}>
+        {/* Ligeramente más visible el borde morado */}
+        <div className="absolute inset-0 border-[16px] md:border-[32px] border-[#7e22ce] opacity-[0.06] pointer-events-none z-0" />
+
+        {/* Lluvia flotante exterior de micro corazones */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
           {particles.map((p) => (
             <span
               key={p.id}
-              className="absolute animate-falling-hearts inline-block"
+              className="absolute animate-wind-purple-dense inline-block text-[7px] opacity-80"
               style={{
                 left: p.left,
                 top: p.top,
                 animationDelay: p.delay,
                 animationDuration: p.duration,
-                color: p.color,
-                fontSize: p.size,
-                opacity: p.opacity
+                color: p.color
               }}
             >
-              ♥
+              💜
             </span>
           ))}
         </div>
 
-        {/* Tarjeta principal */}
-        <div className="w-full max-w-4xl bg-[#fdfcf9] rounded-[2rem] border border-[#e5d8cb] shadow-[0_15px_40px_rgba(100,70,50,0.08)] relative p-8 md:p-14 flex flex-col z-10">
+        {/* Tarjeta Principal */}
+        <div className="w-full max-w-5xl bg-[#fdfcf9] rounded-[3rem] border border-[#eae3da] shadow-[0_30px_70px_rgba(90,65,50,0.1)] overflow-hidden relative p-8 md:p-16 flex flex-col justify-between min-h-[580px] md:min-h-[660px] animate-pop-in">
           
-          <div className="flex flex-col md:flex-row items-center justify-between gap-10">
-            <div className="flex-1 text-left space-y-6 md:pt-6">
-              <h1 className="text-[#3b251a] text-2xl md:text-3xl font-medium tracking-wide">
+          <div className="flex flex-col-reverse md:flex-row items-center md:items-start justify-between gap-10 flex-grow relative">
+            
+            <div className="flex-1 text-left space-y-8 max-w-xl z-10 md:pt-8">
+              {/* CAMBIO: Encabezado ahora es morado profundo */}
+              <h1 className="text-[#6b21a8] text-2xl md:text-3xl font-serif font-semibold tracking-wide">
                 Para el amor de mi vida:
               </h1>
               
-              <p className="text-[#3b251a] text-xl md:text-2xl italic leading-relaxed">
+              <p className="text-[#5c463a] text-xl md:text-2xl font-serif leading-relaxed italic font-light">
                 Las mejores historias requieren paciencia, y la nuestra vale la pena la espera.
               </p>
               
-              <p className="text-[#c8446b] text-xl md:text-2xl font-bold tracking-wide pt-2">
-                {esHoy ? "¡Vuelve hoy a las 12:00 PM para descubrirlo!" : "¡Vuelve mañana, 18 de Mayo, para descubrirlo!"}
-              </p>
+              <div className="pt-2">
+                <span className="inline-block text-[#6b21a8] text-xl md:text-2xl font-bold font-serif tracking-wide bg-[#f3e8ff] px-6 py-2.5 rounded-2xl border border-[#e9d5ff] shadow-sm animate-pulse">
+                  ¡Vuelve mañana, 18 de Mayo, para descubrirlo!
+                </span>
+              </div>
             </div>
 
-            {/* ÁRBOL CON FORMA DE CORAZÓN GRANDE */}
-            <div className="w-72 h-72 md:w-[26rem] md:h-[26rem] relative flex items-center justify-center flex-shrink-0 animate-gentle-sway">
-              <svg viewBox="0 0 200 200" className="w-full h-full overflow-visible">
-                {/* Resplandor trasero */}
-                <circle cx="100" cy="80" r="75" fill="#fce7f3" opacity="0.6" filter="blur(12px)" />
-                
+            {/* Árbol con renderizado masivo */}
+            <div className="w-76 h-76 md:w-[26rem] md:h-[26rem] relative flex items-center justify-center flex-shrink-0 z-10 animate-gentle-sway">
+              <svg viewBox="0 0 200 200" className="w-full h-full filter drop-shadow-[0_15px_35px_rgba(126,34,206,0.25)]">
                 {/* Tronco */}
-                <path d="M92 185 L96 90 L104 90 L108 185 Z" fill="#653819" />
-                <path d="M100 115 L70 85" stroke="#653819" strokeWidth="5" strokeLinecap="round" />
-                <path d="M100 100 L135 65" stroke="#653819" strokeWidth="4.5" strokeLinecap="round" />
-                <path d="M115 80 L145 95" stroke="#653819" strokeWidth="3" strokeLinecap="round" />
+                <path d="M94 185 C96 148 90 128 95 110 C96 100 103 95 105 85 L109 85 C108 97 104 103 105 113 C107 132 104 156 107 185 Z" fill="#4a2c1b" />
+                <path d="M96 113 C85 99 75 96 68 94" stroke="#4a2c1b" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
+                <path d="M104 109 C117 99 126 95 135 93" stroke="#4a2c1b" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
                 
-                {/* Hojas / Corazones */}
-                <g className="select-none">
+                {/* Copa Hiper-Tupida Generada */}
+                <g className="text-[12px] select-none">
+                  {/* CAMBIO: Aura morada trasera duplicada y más intensa */}
+                  <circle cx="100" cy="80" r="56" fill="#a855f7" opacity="0.35" filter="blur(20px)" />
+                  <circle cx="100" cy="80" r="40" fill="#7e22ce" opacity="0.25" filter="blur(15px)" />
+                  
+                  {/* Renderizado dinámico de cientos de corazones */}
                   {treeHearts.map((heart) => (
                     <text
                       key={heart.id}
                       x={heart.x}
                       y={heart.y}
                       fill={heart.color}
-                      className="opacity-95 drop-shadow-sm"
-                      style={{ 
-                        transformOrigin: `${heart.x}px ${heart.y}px`,
-                        transform: `scale(${heart.scale})`
-                      }}
+                      className="opacity-95"
+                      style={{ transformOrigin: `${heart.x}px ${heart.y}px` }}
                     >
-                      ♥
+                      💜
                     </text>
                   ))}
                 </g>
@@ -261,66 +229,49 @@ export default function RomanticWebsite() {
             </div>
           </div>
 
-          <hr className="border-[#e5d8cb] my-8 md:my-10" />
-
-          <div className="w-full">
-            <h3 className="text-[#3b251a] text-lg font-sans mb-4">
+          <div className="w-full mt-10 pt-6 border-t border-[#e6ded5] z-10">
+            <h3 className="text-[#6e584d] text-base md:text-lg font-medium tracking-wider mb-4 uppercase">
               El candado se revelará en:
             </h3>
             
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 font-sans">
-              {waitTimer.days > 0 && (
-                <div className="flex items-baseline gap-1">
-                  <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
-                    {waitTimer.days.toString().padStart(2, '0')}
-                  </span>
-                  <span className="text-[#3b251a] text-sm md:text-base mr-2">días</span>
-                </div>
-              )}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[#2e1c15] font-serif">
+              {/* CAMBIO: Todos los números del contador ahora son morados */}
+              <div className="flex items-baseline gap-1">
+                <span className="font-mono font-bold text-3xl md:text-4xl text-[#7e22ce] tracking-tighter">
+                  {waitTimer.days.toString().padStart(2, '0')}
+                </span>
+                {/* CAMBIO: Etiquetas ahora son púrpuras grisáceas */}
+                <span className="text-[#9381ff] text-sm font-sans font-medium mr-2">días</span>
+              </div>
 
               <div className="flex items-baseline gap-1">
-                <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
+                <span className="font-mono font-bold text-3xl md:text-4xl text-[#7e22ce] tracking-tighter">
                   {waitTimer.hours.toString().padStart(2, '0')}
                 </span>
-                <span className="text-[#3b251a] text-sm md:text-base mr-2">horas</span>
+                <span className="text-[#9381ff] text-sm font-sans font-medium mr-2">horas</span>
               </div>
 
               <div className="flex items-baseline gap-1">
-                <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
+                <span className="font-mono font-bold text-3xl md:text-4xl text-[#7e22ce] tracking-tighter">
                   {waitTimer.minutes.toString().padStart(2, '0')}
                 </span>
-                <span className="text-[#3b251a] text-sm md:text-base mr-2">minutos</span>
+                <span className="text-[#9381ff] text-sm font-sans font-medium mr-2">minutos</span>
               </div>
 
               <div className="flex items-baseline gap-1">
-                <span className="font-bold text-4xl md:text-5xl text-[#c8446b] tracking-tight">
+                <span className="font-mono font-bold text-3xl md:text-4xl text-[#7e22ce] tracking-tighter animate-pulse">
                   {waitTimer.seconds.toString().padStart(2, '0')}
                 </span>
-                <span className="text-[#3b251a] text-sm md:text-base">segundos</span>
+                <span className="text-[#9381ff] text-sm font-sans font-medium">segundos</span>
               </div>
             </div>
 
-            <p className="text-[#7d685c] text-sm md:text-base mt-4 font-sans italic">
-              {esHoy ? "Hoy a las 12:00 PM" : "Mañana a las 12:00 PM"}
+            <p className="text-[#947f73] text-sm mt-4 font-sans font-medium italic tracking-wide">
+              Mañana a las 12:00 PM
             </p>
           </div>
 
         </div>
-        
-        <style dangerouslySetInnerHTML={{__html: `
-          @keyframes falling-hearts {
-            0% { transform: translateY(-10vh) rotate(0deg) scale(0.8); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 0.8; }
-            100% { transform: translateY(110vh) rotate(60deg) scale(1.1); opacity: 0; }
-          }
-          @keyframes gentle-sway {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(0.6deg); }
-          }
-          .animate-falling-hearts { animation: falling-hearts linear infinite; }
-          .animate-gentle-sway { animation: gentle-sway 6s ease-in-out infinite; }
-        `}} />
       </div>
     );
   }
@@ -351,13 +302,6 @@ export default function RomanticWebsite() {
           </div>
           <button onClick={handleUnlock} className="w-full bg-transparent border-2 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc] hover:text-[#0f0720] font-bold py-4 rounded-full text-xl uppercase tracking-widest transition-all">Abrir Diario 🔓</button>
         </div>
-
-        <style dangerouslySetInnerHTML={{__html: `
-          @keyframes pop-in { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
-          @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-          .animate-pop-in { animation: pop-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-          .animate-shake { animation: shake 0.4s ease-in-out; }
-        `}} />
       </div>
     );
   }
@@ -509,9 +453,38 @@ export default function RomanticWebsite() {
 
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes spin-slow { 100% { transform: rotate(360deg); } }
+        @keyframes pop-in { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes slide-in { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        
+        @keyframes gentle-sway {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(0.6deg); }
+        }
+        
+        @keyframes wind-purple-dense {
+          0% {
+            transform: translate(0, 0) rotate(0deg);
+            opacity: 0;
+          }
+          10% {
+            opacity: 0.85;
+          }
+          45% {
+            transform: translate(-220px, -40px) rotate(180deg);
+          }
+          100% {
+            transform: translate(-650px, -110px) rotate(360deg);
+            opacity: 0;
+          }
+        }
+        
         .animate-spin-slow { animation: spin-slow 8s linear infinite; }
+        .animate-pop-in { animation: pop-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-slide-in { animation: slide-in 0.6s ease-out forwards; }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+        .animate-gentle-sway { animation: gentle-sway 6s ease-in-out infinite; }
+        .animate-wind-purple-dense { animation: wind-purple-dense linear infinite; }
       `}} />
     </div>
   );
