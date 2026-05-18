@@ -11,17 +11,14 @@ type WheelProps = {
 };
 
 export default function RomanticWebsite() {
-  // --- ESTADO SECRETO ---
   const [modoEdicion, setModoEdicion] = useState(false);
 
-  // --- CANDADO ---
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
   const [lockDay, setLockDay] = useState(15);
   const [lockMonth, setLockMonth] = useState(1);
   const [lockYear, setLockYear] = useState(2025);
 
-  // --- NAVEGACIÓN ---
   const [step, setStep] = useState(0);
 
   const [timeTogether, setTimeTogether] = useState({
@@ -38,57 +35,48 @@ export default function RomanticWebsite() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // --- FECHAS ---
   const picnicDate = new Date(2026, 3, 18);
   const chapter1Date = new Date(2026, 4, 18);
   const chapter2Date = new Date(2026, 5, 18);
 
-  // --- ADMIN MODE ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("admin") === "true") setModoEdicion(true);
   }, []);
 
-  // --- DESBLOQUEO POR FECHA ---
   useEffect(() => {
     const now = new Date();
     if (now >= chapter1Date) setCanSeeChapter1(true);
     if (now >= chapter2Date) setCanSeeChapter2(true);
   }, []);
 
-  // --- CONTADOR ---
   useEffect(() => {
     if (!isUnlocked) return;
 
     const timer = setInterval(() => {
       const now = new Date();
-      const difference = now.getTime() - picnicDate.getTime();
+      const diff = now.getTime() - picnicDate.getTime();
 
       setTimeTogether({
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / (1000 * 60)) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / 1000 / 60) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
       });
     }, 1000);
 
     return () => clearInterval(timer);
   }, [isUnlocked]);
 
-  // --- AUDIO ---
   const toggleMusic = () => {
     if (!audioRef.current) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(() => {});
-    }
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play().catch(() => {});
 
     setIsPlaying(!isPlaying);
   };
 
-  // --- RUEDA ---
   const spinWheel = (type: WheelType, direction: number) => {
     if (type === "day") {
       setLockDay((p) =>
@@ -109,7 +97,6 @@ export default function RomanticWebsite() {
     }
   };
 
-  // --- DESBLOQUEO ---
   const handleUnlock = () => {
     if (lockDay === 18 && lockMonth === 4 && lockYear === 2026) {
       setIsUnlocked(true);
@@ -119,67 +106,80 @@ export default function RomanticWebsite() {
     }
   };
 
-  // --- WHEEL ---
   const Wheel = ({ value, type, label }: WheelProps) => (
     <div className="flex flex-col items-center">
       <button onClick={() => spinWheel(type, 1)}>▲</button>
 
-      <div className="w-20 h-20 flex items-center justify-center bg-black text-white">
-        {value}
+      <div className="bg-[#1a0d35] border border-[#c084fc] w-20 h-20 flex items-center justify-center rounded-xl">
+        <span className="text-[#deff9a] text-2xl font-bold">{value}</span>
       </div>
 
       <button onClick={() => spinWheel(type, -1)}>▼</button>
 
-      <span>{label}</span>
+      <span className="text-[#c084fc] text-xs mt-1">{label}</span>
     </div>
   );
 
-  // --- BLOQUEO ---
+  // 🔒 BLOQUEO POR FECHA
   if (!canSeeChapter1 && !modoEdicion) {
-    return <div>No disponible aún</div>;
-  }
-
-  // --- CANDADO ---
-  if (!isUnlocked) {
     return (
-      <div>
-        <h1>Bloqueado</h1>
-
-        <Wheel value={String(lockDay)} type="day" label="Día" />
-        <Wheel value={String(lockMonth)} type="month" label="Mes" />
-        <Wheel value={String(lockYear)} type="year" label="Año" />
-
-        <button onClick={handleUnlock}>Abrir</button>
-
-        {errorMsg && <p>Error</p>}
+      <div className="min-h-screen bg-[#0f0720] flex items-center justify-center text-white">
+        <div className="text-center">
+          <h1 className="text-3xl">Aún no es el momento...</h1>
+        </div>
       </div>
     );
   }
 
-  // --- CONTENIDO ---
+  // 🔐 CANDADO
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen bg-[#0f0720] flex flex-col items-center justify-center text-white">
+        <h1 className="text-3xl mb-6">La Llave de Nosotros</h1>
+
+        <div className="flex gap-4 mb-6">
+          <Wheel value={String(lockDay)} type="day" label="Día" />
+          <Wheel value={String(lockMonth)} type="month" label="Mes" />
+          <Wheel value={String(lockYear)} type="year" label="Año" />
+        </div>
+
+        <button onClick={handleUnlock} className="border px-6 py-2 rounded">
+          Abrir
+        </button>
+
+        {errorMsg && <p className="text-red-400 mt-2">Error</p>}
+      </div>
+    );
+  }
+
+  // 💖 CONTENIDO
   return (
-    <div>
+    <div className="min-h-screen bg-[#0f0720] text-white p-6">
       <audio ref={audioRef} src="/musica.mp3" loop />
 
       <button onClick={toggleMusic}>
-        {isPlaying ? "Pause" : "Play"}
+        {isPlaying ? "🔊" : "🔇"}
       </button>
 
-      <h1>Tu sitio romántico 💜</h1>
+      <h1 className="text-4xl mt-6">Tu historia 💜</h1>
 
       <p>Días juntos: {timeTogether.days}</p>
 
-      <div>
+      <div className="mt-6">
         {step === 0 && <p>Inicio</p>}
         {step === 1 && <p>Historia</p>}
-        {step === 2 && <p>Más contenido</p>}
+        {step === 2 && <p>Recuerdos</p>}
       </div>
 
-      <button onClick={() => setStep((s) => Math.max(0, s - 1))}>
-        Anterior
-      </button>
+      <div className="flex gap-4 mt-6">
+        <button onClick={() => setStep((s) => Math.max(0, s - 1))}>
+          Anterior
+        </button>
 
-      <button onClick={() => setStep((s) => s + 1)}>Siguiente</button>
+        <button onClick={() => setStep((s) => s + 1)}>
+          Siguiente
+        </button>
+      </div>
     </div>
   );
 }
