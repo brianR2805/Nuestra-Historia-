@@ -136,16 +136,48 @@ export default function RomanticWebsite() {
     setMensajeActual(mensajesSorpresa[randomIndex]);
   };
 
+  // Intentar reproducir automáticamente la música
+  const forcePlayMusic = () => {
+    if (audioRef.current && !isPlaying) {
+      audioRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch((e) => console.log("El navegador bloqueó la reproducción automática, esperando interacción...", e));
+    }
+  };
+
   // Detectar Modo Editor mediante URL secreta (?modo=editor)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("modo") === "editor") {
         setEsEditor(true);
-        setCanSeeChapter1(true); // Permitir saltar la primera pantalla de carga
+        setCanSeeChapter1(true);
       }
     }
   }, []);
+
+  // Intentar reproducir el audio cuando cambie el estado o la vista
+  useEffect(() => {
+    forcePlayMusic();
+    
+    // Escuchar interacciones en toda la pantalla para vencer el bloqueo del navegador
+    const handleUserInteraction = () => {
+      forcePlayMusic();
+      // Quitar los eventos una vez que la música haya iniciado con éxito
+      if (audioRef.current && !audioRef.current.paused) {
+        window.removeEventListener("click", handleUserInteraction);
+        window.removeEventListener("touchstart", handleUserInteraction);
+      }
+    };
+
+    window.addEventListener("click", handleUserInteraction);
+    window.addEventListener("touchstart", handleUserInteraction);
+
+    return () => {
+      window.removeEventListener("click", handleUserInteraction);
+      window.removeEventListener("touchstart", handleUserInteraction);
+    };
+  }, [canSeeChapter1, isUnlocked]);
 
   useEffect(() => {
     const purpleVioletShades = ['#6d28d9', '#7e22ce', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe', '#7c3aed', '#9333ea'];
@@ -182,7 +214,6 @@ export default function RomanticWebsite() {
         setWaitTimer({ days: Math.floor(difference / (1000 * 60 * 60 * 24)), hours: Math.floor((difference / (1000 * 60 * 60)) % 24), minutes: Math.floor((difference / 1000 / 60) % 60), seconds: Math.floor((difference / 1000) % 60) });
       }
 
-      // Cronómetro en vivo hacia el Mes 2 (18 de Junio de 2026)
       const diffCh2 = chapter2Date.getTime() - now.getTime();
       if (diffCh2 > 0 && !esEditor) {
         setWaitTimerCh2({
@@ -192,7 +223,6 @@ export default function RomanticWebsite() {
           seconds: Math.floor((diffCh2 / 1000) % 60)
         });
       } else {
-        // En Modo Editor o si ya pasó, se queda en 0
         setWaitTimerCh2({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     };
@@ -221,13 +251,14 @@ export default function RomanticWebsite() {
   };
 
   const spinWheel = (type: 'day' | 'month' | 'year', direction: number) => {
+    forcePlayMusic(); // Activa la música al interactuar con las ruedas
     if (type === 'day') setLockDay(prev => prev + direction > 31 ? 1 : prev + direction < 1 ? 31 : prev + direction);
     else if (type === 'month') setLockMonth(prev => prev + direction > 12 ? 1 : prev + direction < 1 ? 12 : prev + direction);
     else if (type === 'year') setLockYear(prev => prev + direction > 2030 ? 2020 : prev + direction < 2020 ? 2030 : prev + direction);
   };
 
   const handleUnlock = () => {
-    // Si estás en modo editor, cualquier combinación abre el candado
+    forcePlayMusic(); // Activa la música al presionar abrir diario
     if (esEditor || (lockDay === 18 && lockMonth === 4 && lockYear === 2026)) { 
       setIsUnlocked(true); 
     } else {
@@ -258,7 +289,7 @@ export default function RomanticWebsite() {
 
     // --- DIAPOSITIVA 3: REENCUENTRO ---
     <div key="s2" className="flex flex-col items-center gap-8 animate-slide-in w-full max-w-5xl">
-      <div className="text-center max-w-3xl"><h2 className="text-4xl md:text-5xl font-serif text-[#a855f7] mb-2">Donde todo empieza</h2><h3 className="text-2xl text-[#3f2a2a] mb-6 font-bold">6 de Enero, 2025</h3><p className="text-[#594646] text-lg mb-4 leading-relaxed">Ese día parecía normal, como cualquier otro, pero terminó convirtiéndose en el comienzo de algo que nunca imagine.</p><p className="text-[#594646] text-lg leading-relaxed">Sin darme cuenta, comenzaste a convertirte en esa persona con la que quería hablar todos los días. Ese inicio tan sencillo terminó siendo el comienzo de algo muy bonito entre nosotros.💜</p></div>
+      <div className="text-center max-w-3xl"><h2 className="text-4xl md:text-5xl font-serif text-[#a855f7] mb-2">Donde todo empieza</h2><h3 className="text-2xl text-[#3f2a2a] mb-6 font-bold">6 de Enero, 2025</h3><p className="text-[#594646] text-lg mb-4 leading-relaxed">Ese día parecía normal, como cualquier otro, pero terminó convirtiéndose en el comienzo de algo que nunca impresioné.</p><p className="text-[#594646] text-lg leading-relaxed">Sin darme cuenta, comenzaste a convertirte en esa persona con la que quería hablar todos los días. Ese inicio tan sencillo terminó siendo el comienzo de algo muy bonito entre nosotros.💜</p></div>
       <div className="flex flex-col items-center w-full max-w-4xl relative"><div className="grid grid-cols-2 gap-4 md:gap-8 w-full z-10 mb-4"><img src="WhatsApp Image 2026-05-18 at 02.21.04 (3).jpeg" className="rounded-[1.5rem] border-[8px] border-white shadow-xl -rotate-2 hover:rotate-0 transition-all duration-500 w-full aspect-[3/4] object-cover" alt="Recuerdo 1"/><img src="/foto-reencuentro-2.jpeg" className="rounded-[1.5rem] border-[8px] border-white shadow-xl rotate-2 hover:rotate-0 transition-all duration-500 w-full aspect-[3/4] object-cover" alt="Recuerdo 2"/></div><div className="bg-[#fffbeb] p-4 md:p-6 rounded-xl shadow-xl border-t-4 border-l-2 border-[#a855f7] -mt-12 md:-mt-16 z-20 rotate-[-1deg] hover:rotate-0 transition-all mx-4 md:mx-auto max-w-2xl relative"><div className="absolute top-[-10px] left-1/2 transform -translate-x-1/2 w-20 h-4 bg-[#a855f7]/20 backdrop-blur-md rounded-sm" /><p className="text-[#3f2a2a] text-lg md:text-xl font-serif italic text-center leading-relaxed">"Estos son los únicos recuerdos que tengo de ese día."</p></div></div>
     </div>,
 
