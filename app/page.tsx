@@ -3,71 +3,134 @@
 import { useState, useEffect, useRef } from "react";
 
 // --- FECHAS CLAVE ---
-const picnicDate = new Date(2026, 3, 18, 0, 0, 0); // 18 de Abril de 2026 (Para el contador del tiempo juntos)
-const chapter1Date = new Date(2026, 4, 18, 12, 0, 0); // 18 de Mayo de 2026 a las 12:00 del mediodía
-const chapter2Date = new Date(2026, 5, 18, 12, 0, 0); // 18 de Junio de 2026 a las 12:00 del mediodía
+const picnicDate = new Date(2026, 3, 18, 0, 0, 0); // 18 de Abril de 2026
+const chapter1Date = new Date(2026, 4, 18, 12, 0, 0); // 18 de Mayo de 2026 a las 12:00 PM
+const chapter2Date = new Date(2026, 5, 18, 12, 0, 0); // 18 de Junio de 2026 a las 12:00 PM
+
+// --- COMPONENTE WHEEL ---
+const Wheel = ({ value, type, label, spinWheel }: { value: string, type: 'day' | 'month' | 'year', label: string, spinWheel: (type: 'day' | 'month' | 'year', direction: number) => void }) => (
+  <div className="flex flex-col items-center">
+    <button onClick={() => spinWheel(type, 1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mb-2 transition-all hover:-translate-y-1">▲</button>
+    <div className="bg-[#1a0d35] border border-[#c084fc] w-20 md:w-24 h-24 flex items-center justify-center rounded-xl relative shadow-[0_0_15px_rgba(192,132,252,0.3)]">
+      <span className="text-4xl md:text-5xl font-mono font-bold text-[#deff9a] z-10">{value}</span>
+    </div>
+    <button onClick={() => spinWheel(type, -1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mt-2 transition-all hover:translate-y-1">▼</button>
+    <span className="text-[#c084fc] text-[12px] font-bold tracking-widest mt-2">{label}</span>
+  </div>
+);
 
 export default function RomanticWebsite() {
-  // --- ESTADO SECRETO DE ADMINISTRADOR ---
   const [modoEdicion, setModoEdicion] = useState(false);
-
-  // --- ESTADOS DEL CANDADO ---
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
   const [lockDay, setLockDay] = useState(15);
   const [lockMonth, setLockMonth] = useState(1);
   const [lockYear, setLockYear] = useState(2025);
 
-  // --- ESTADOS DE NAVEGACIÓN Y TIEMPO ---
   const [step, setStep] = useState(0);
   const [timeTogether, setTimeTogether] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [waitTimer, setWaitTimer] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [particles, setParticles] = useState<{ id: number; left: string; delay: string; size: string; duration: string }[]>([]);
   
-  // Estados de validación de fechas reales
+  const [esHoy, setEsHoy] = useState(false);
+  
+  const [particles, setParticles] = useState<{ id: number; left: string; top: string; delay: string; duration: string; color: string; size: string; opacity: number }[]>([]);
+  const [treeHearts, setTreeHearts] = useState<{ id: number; x: number; y: number; color: string; scale: number }[]>([]);
+  
   const [canSeeChapter1, setCanSeeChapter1] = useState(false);
   const [canSeeChapter2, setCanSeeChapter2] = useState(false);
-  
-  // Referencia del audio para TypeScript
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Generador de partículas para simular overlay de video mágico
+  // Generador de partículas y árbol 
   useEffect(() => {
-    const generated = Array.from({ length: 25 }).map((_, i) => ({
+    const pinkRedShades = ['#ef4444', '#ec4899', '#f43f5e', '#e11d48', '#be185d', '#ff1493', '#db2777', '#9d174d'];
+    
+    // 1. LLUVIA MASIVA DE CORAZONES EN TODA LA PANTALLA
+    const generatedParticles = Array.from({ length: 450 }).map((_, i) => ({
       id: i,
       left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 6}s`,
-      size: `${Math.random() * 14 + 6}px`,
-      duration: `${Math.random() * 7 + 5}s`,
+      top: `${-20 + Math.random() * 40}vh`,
+      delay: `${Math.random() * 15}s`,
+      duration: `${Math.random() * 10 + 7}s`,
+      color: pinkRedShades[Math.floor(Math.random() * pinkRedShades.length)],
+      size: `${Math.random() * 15 + 8}px`,
+      opacity: Math.random() * 0.5 + 0.3
     }));
-    setParticles(generated);
+    setParticles(generatedParticles);
+
+    // 2. CORAZONES DEL ÁRBOL (Formando un corazón perfecto usando ecuaciones matemáticas)
+    const heartsArray: { id: number; x: number; y: number; color: string; scale: number }[] = [];
+    let count = 0;
+    
+    // Follaje superior (Forma de corazón)
+    for (let i = 0; i < 400; i++) {
+      const t = Math.random() * Math.PI * 2;
+      const d = Math.sqrt(Math.random()); // Distribución uniforme dentro del corazón
+      const scale = 3.5;
+
+      // Ecuación paramétrica del corazón
+      const hx = 16 * Math.pow(Math.sin(t), 3);
+      const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+
+      // Centro del corazón en X=100, Y=65
+      const x = 100 + d * scale * hx + (Math.random() - 0.5) * 4; 
+      const y = 65 - d * scale * hy + (Math.random() - 0.5) * 4; // Restamos porque SVG Y va hacia abajo
+
+      heartsArray.push({
+        id: count++,
+        x: parseFloat(x.toFixed(1)),
+        y: parseFloat(y.toFixed(1)),
+        color: pinkRedShades[Math.floor(Math.random() * pinkRedShades.length)],
+        scale: Math.random() * 0.6 + 0.8 // Escala variada para dar textura
+      });
+    }
+
+    // Corazones caídos en la base del tronco
+    for (let i = 0; i < 50; i++) {
+      const bx = 100 + (Math.random() - 0.5) * 70; // Desplazamiento horizontal
+      const dist = Math.abs(bx - 100);
+      const by = 185 - Math.random() * (15 - dist * 0.25); // Forma un montículo
+
+      if (by > 175) {
+        heartsArray.push({
+          id: count++,
+          x: parseFloat(bx.toFixed(1)),
+          y: parseFloat(by.toFixed(1)),
+          color: pinkRedShades[Math.floor(Math.random() * pinkRedShades.length)],
+          scale: Math.random() * 0.4 + 0.6
+        });
+      }
+    }
+
+    setTreeHearts(heartsArray);
   }, []);
 
-  // 1. Efecto para detectar si entraste con tu link secreto
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("admin") === "true") {
-        setModoEdicion(true);
-      }
+      if (params.get("admin") === "true") setModoEdicion(true);
     }
   }, []);
 
-  // 2. Verificador de fecha real
   useEffect(() => {
     const now = new Date();
     if (now.getTime() >= chapter1Date.getTime()) setCanSeeChapter1(true);
     if (now.getTime() >= chapter2Date.getTime()) setCanSeeChapter2(true);
+    
+    if (now.getDate() === chapter1Date.getDate() && now.getMonth() === chapter1Date.getMonth() && now.getFullYear() === chapter1Date.getFullYear()) {
+      setEsHoy(true);
+    }
   }, []);
 
-  // 3. Contador regresivo para la PANTALLA DE ESPERA (Capítulo 1)
   useEffect(() => {
     if (canSeeChapter1 || modoEdicion) return;
-
     const waitInterval = setInterval(() => {
       const now = new Date();
       const difference = chapter1Date.getTime() - now.getTime();
+      
+      if (now.getDate() === chapter1Date.getDate()) {
+        setEsHoy(true);
+      }
 
       if (difference <= 0) {
         setCanSeeChapter1(true);
@@ -81,11 +144,9 @@ export default function RomanticWebsite() {
         });
       }
     }, 1000);
-
     return () => clearInterval(waitInterval);
   }, [canSeeChapter1, modoEdicion]);
 
-  // 4. Contador de tiempo juntos (Cuando ya está abierto el candado)
   useEffect(() => {
     if (!isUnlocked) return;
     const timer = setInterval(() => {
@@ -120,119 +181,144 @@ export default function RomanticWebsite() {
     else { setErrorMsg(true); setTimeout(() => setErrorMsg(false), 800); }
   };
 
-  const Wheel = ({ value, type, label }: { value: string, type: 'day' | 'month' | 'year', label: string }) => (
-    <div className="flex flex-col items-center">
-      <button onClick={() => spinWheel(type, 1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mb-2 transition-all hover:-translate-y-1">▲</button>
-      <div className="bg-[#1a0d35] border border-[#c084fc] w-20 md:w-24 h-24 flex items-center justify-center rounded-xl relative shadow-[0_0_15px_rgba(192,132,252,0.3)]">
-        <span className="text-4xl md:text-5xl font-mono font-bold text-[#deff9a] z-10">{value}</span>
-      </div>
-      <button onClick={() => spinWheel(type, -1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mt-2 transition-all hover:translate-y-1">▼</button>
-      <span className="text-[#c084fc] text-[12px] font-bold tracking-widest mt-2">{label}</span>
-    </div>
-  );
-
-  // --- PANTALLA 0: BLOQUEO CINEMÁTICO MODO VIDEO ---
+  // --- PANTALLA 0: ESPERA ---
   if (!canSeeChapter1 && !modoEdicion) {
     return (
-      <div className="min-h-screen bg-[#06030d] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+      <div className="min-h-screen bg-[#f7f3ed] flex items-center justify-center p-4 md:p-8 relative font-serif select-none">
         
-        {/* Fondo con Movimiento de Cámara (Ken Burns Effect) */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,_rgba(147,51,234,0.25)_0%,_transparent_60%),_radial-gradient(circle_at_80%_80%,_rgba(222,255,154,0.1)_0%,_transparent_50%)] z-0 pointer-events-none animate-cinematic-bg" />
-        
-        {/* Ondas expansivas de pulso */}
-        <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
-          <div className="absolute w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#c084fc]/5 rounded-full animate-pulse-slow"></div>
-          <div className="absolute w-[450px] md:w-[750px] h-[450px] md:h-[750px] bg-[#deff9a]/5 rounded-full animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
-        </div>
-
-        {/* Capa de partículas flotantes estilo Overlay de Video */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+        {/* LLUVIA FORZADA AL FRENTE (z-[9999]) PARA QUE CUBRA TODO EL ANCHO SIN SER TAPADA */}
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, pointerEvents: 'none', overflow: 'hidden' }}>
           {particles.map((p) => (
             <span
               key={p.id}
-              className="absolute bottom-[-5%] text-[#c084fc]/40 animate-float-up inline-block"
+              className="absolute animate-falling-hearts inline-block"
               style={{
                 left: p.left,
+                top: p.top,
                 animationDelay: p.delay,
-                fontSize: p.size,
                 animationDuration: p.duration,
+                color: p.color,
+                fontSize: p.size,
+                opacity: p.opacity
               }}
             >
-              ✨
+              ♥
             </span>
           ))}
         </div>
-        
-        {/* Contenedor Principal con Brillo de Neón Variable */}
-        <div className="z-20 bg-[#0f0720]/70 backdrop-blur-2xl border border-[#c084fc]/30 p-10 md:p-14 rounded-[3rem] text-center max-w-xl w-full animate-pop-in animate-dynamic-glow relative">
-          
-          {/* Línea de escaneo superior estilo reproductor */}
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#deff9a] to-transparent opacity-70 animate-pulse"></div>
-          
-          {/* Ícono central con efecto Flotante y Destello continuo */}
-          <div className="relative inline-block mb-8">
-            <div className="text-7xl md:text-8xl animate-float z-10 relative drop-shadow-[0_0_20px_rgba(192,132,252,0.6)]">⏳</div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl md:text-7xl animate-ping opacity-25 text-[#deff9a]">✨</div>
-          </div>
 
-          {/* Título con Texto Líquido Reluciente */}
-          <h1 className="text-4xl md:text-5xl font-serif text-[#f5f5f5] mb-6 tracking-wide">
-            Aún no es <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c084fc] via-[#deff9a] to-[#c084fc] bg-[length:200%_auto] animate-shimmer-text font-bold">el momento...</span>
-          </h1>
+        {/* Tarjeta principal */}
+        <div className="w-full max-w-4xl bg-[#fdfcf9] rounded-[2rem] border border-[#e5d8cb] shadow-[0_15px_40px_rgba(100,70,50,0.08)] relative p-8 md:p-14 flex flex-col z-10">
           
-          <div className="bg-[#06030d]/80 rounded-3xl p-6 border border-[#c084fc]/20 mb-8 shadow-[inset_0_4px_20px_rgba(0,0,0,0.6)]">
-            <p className="text-[#daffde] text-lg mb-2 font-medium tracking-wide">Este regalo está mágicamente sellado.</p>
-            <p className="text-[#f5f5f5]/70 text-sm italic font-serif">"Las mejores historias requieren paciencia, y la nuestra vale cada segundo de espera."</p>
-            
-            {/* Marcadores de Tiempo Dinámicos (Estilo Video Player) */}
-            <div className="mt-8 border-t border-[#c084fc]/20 pt-6">
-              <p className="text-[#c084fc] text-xs uppercase tracking-[0.2em] font-black mb-4 opacity-90">El candado se revelará en:</p>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-10">
+            <div className="flex-1 text-left space-y-6 md:pt-6">
+              <h1 className="text-[#3b251a] text-2xl md:text-3xl font-medium tracking-wide">
+                Para el amor de mi vida:
+              </h1>
               
-              <div className="flex justify-center gap-3 md:gap-4">
-                {waitTimer.days > 0 && (
-                  <>
-                    <div className="flex flex-col items-center">
-                      <span className="text-2xl md:text-3xl font-mono font-bold text-[#deff9a] bg-[#12072b] w-14 md:w-16 py-3 rounded-2xl border border-[#c084fc]/40 shadow-[0_8px_20px_rgba(0,0,0,0.5)] relative overflow-hidden">
-                        <span className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></span>
-                        {waitTimer.days.toString().padStart(2, '0')}
-                      </span>
-                      <span className="text-[9px] text-[#c084fc] mt-2 font-black tracking-widest">DÍAS</span>
-                    </div>
-                    <span className="text-2xl text-[#c084fc] pt-3 animate-pulse font-black">:</span>
-                  </>
-                )}
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl md:text-3xl font-mono font-bold text-[#deff9a] bg-[#12072b] w-14 md:w-16 py-3 rounded-2xl border border-[#c084fc]/40 shadow-[0_8px_20px_rgba(0,0,0,0.5)] relative overflow-hidden">
-                    <span className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></span>
-                    {waitTimer.hours.toString().padStart(2, '0')}
-                  </span>
-                  <span className="text-[9px] text-[#c084fc] mt-2 font-black tracking-widest">HORAS</span>
-                </div>
-                <span className="text-2xl text-[#c084fc] pt-3 animate-pulse font-black">:</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl md:text-3xl font-mono font-bold text-[#deff9a] bg-[#12072b] w-14 md:w-16 py-3 rounded-2xl border border-[#c084fc]/40 shadow-[0_8px_20px_rgba(0,0,0,0.5)] relative overflow-hidden">
-                    <span className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></span>
-                    {waitTimer.minutes.toString().padStart(2, '0')}
-                  </span>
-                  <span className="text-[9px] text-[#c084fc] mt-2 font-black tracking-widest">MINUTOS</span>
-                </div>
-                <span className="text-2xl text-[#c084fc] pt-3 animate-pulse font-black">:</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl md:text-3xl font-mono font-bold text-[#f5f5f5] bg-[#1a0d35] w-14 md:w-16 py-3 rounded-2xl border border-[#deff9a]/40 shadow-[0_8px_20px_rgba(192,132,252,0.2)] relative overflow-hidden animate-pulse">
-                    <span className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></span>
-                    {waitTimer.seconds.toString().padStart(2, '0')}
-                  </span>
-                  <span className="text-[9px] text-[#deff9a] mt-2 font-black tracking-widest">SEGUNDOS</span>
-                </div>
-              </div>
+              <p className="text-[#3b251a] text-xl md:text-2xl italic leading-relaxed">
+                Las mejores historias requieren paciencia, y la nuestra vale la pena la espera.
+              </p>
+              
+              <p className="text-[#c8446b] text-xl md:text-2xl font-bold tracking-wide pt-2">
+                {esHoy ? "¡Vuelve hoy a las 12:00 PM para descubrirlo!" : "¡Vuelve mañana, 18 de Mayo, para descubrirlo!"}
+              </p>
+            </div>
+
+            {/* ÁRBOL CON FORMA DE CORAZÓN */}
+            <div className="w-72 h-72 md:w-[26rem] md:h-[26rem] relative flex items-center justify-center flex-shrink-0 animate-gentle-sway">
+              <svg viewBox="0 0 200 200" className="w-full h-full overflow-visible">
+                {/* Resplandor trasero */}
+                <circle cx="100" cy="80" r="75" fill="#fce7f3" opacity="0.6" filter="blur(12px)" />
+                
+                {/* Tronco */}
+                <path d="M92 185 L96 90 L104 90 L108 185 Z" fill="#653819" />
+                <path d="M100 115 L70 85" stroke="#653819" strokeWidth="5" strokeLinecap="round" />
+                <path d="M100 100 L135 65" stroke="#653819" strokeWidth="4.5" strokeLinecap="round" />
+                <path d="M115 80 L145 95" stroke="#653819" strokeWidth="3" strokeLinecap="round" />
+                
+                {/* Hojas / Corazones */}
+                <g className="select-none">
+                  {treeHearts.map((heart) => (
+                    <text
+                      key={heart.id}
+                      x={heart.x}
+                      y={heart.y}
+                      fill={heart.color}
+                      className="opacity-95 drop-shadow-sm"
+                      style={{ 
+                        transformOrigin: `${heart.x}px ${heart.y}px`,
+                        transform: `scale(${heart.scale})`
+                      }}
+                    >
+                      ♥
+                    </text>
+                  ))}
+                </g>
+              </svg>
             </div>
           </div>
 
-          {/* Sello Inferior */}
-          <p className="text-[#deff9a] text-sm font-black uppercase tracking-[0.3em] animate-heartbeat inline-block drop-shadow-[0_0_8px_rgba(222,255,154,0.4)]">
-            🎬 Mañana a las 12:00 PM
-          </p>
+          <hr className="border-[#e5d8cb] my-8 md:my-10" />
+
+          <div className="w-full">
+            <h3 className="text-[#3b251a] text-lg font-sans mb-4">
+              El candado se revelará en:
+            </h3>
+            
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 font-sans">
+              {waitTimer.days > 0 && (
+                <div className="flex items-baseline gap-1">
+                  <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
+                    {waitTimer.days.toString().padStart(2, '0')}
+                  </span>
+                  <span className="text-[#3b251a] text-sm md:text-base mr-2">días</span>
+                </div>
+              )}
+
+              <div className="flex items-baseline gap-1">
+                <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
+                  {waitTimer.hours.toString().padStart(2, '0')}
+                </span>
+                <span className="text-[#3b251a] text-sm md:text-base mr-2">horas</span>
+              </div>
+
+              <div className="flex items-baseline gap-1">
+                <span className="font-bold text-4xl md:text-5xl text-black tracking-tight">
+                  {waitTimer.minutes.toString().padStart(2, '0')}
+                </span>
+                <span className="text-[#3b251a] text-sm md:text-base mr-2">minutos</span>
+              </div>
+
+              <div className="flex items-baseline gap-1">
+                <span className="font-bold text-4xl md:text-5xl text-[#c8446b] tracking-tight">
+                  {waitTimer.seconds.toString().padStart(2, '0')}
+                </span>
+                <span className="text-[#3b251a] text-sm md:text-base">segundos</span>
+              </div>
+            </div>
+
+            <p className="text-[#7d685c] text-sm md:text-base mt-4 font-sans italic">
+              {esHoy ? "Hoy a las 12:00 PM" : "Mañana a las 12:00 PM"}
+            </p>
+          </div>
+
         </div>
+        
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes falling-hearts {
+            0% { transform: translateY(-10vh) rotate(0deg) scale(0.8); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(110vh) rotate(60deg) scale(1.1); opacity: 0; }
+          }
+          @keyframes gentle-sway {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(0.6deg); }
+          }
+          .animate-falling-hearts { animation: falling-hearts linear infinite; }
+          .animate-gentle-sway { animation: gentle-sway 6s ease-in-out infinite; }
+        `}} />
       </div>
     );
   }
@@ -254,22 +340,28 @@ export default function RomanticWebsite() {
           <p className="text-[#daffde] mb-4 text-lg">Este diario contiene los momentos que han definido nuestro camino. Pero como todo gran tesoro, requiere de una llave especial.</p>
           <p className="text-[#c084fc] italic mb-10 font-serif">Pista: El día que me hiciste el hombre más feliz en el Parque de las Garzas.</p>
           
-          <div className={`flex justify-center items-center gap-4 mb-10 ${errorMsg ? 'animate-shake border-red-500' : ''}`}>
-            <Wheel value={lockDay.toString().padStart(2, '0')} type="day" label="DÍA" />
+          <div className={`flex justify-center items-center gap-4 mb-10 ${errorMsg ? 'animate-shake' : ''}`}>
+            <Wheel value={lockDay.toString().padStart(2, '0')} type="day" label="DÍA" spinWheel={spinWheel} />
             <span className="text-3xl text-[#c084fc] font-black mb-8">:</span>
-            <Wheel value={lockMonth.toString().padStart(2, '0')} type="month" label="MES" />
+            <Wheel value={lockMonth.toString().padStart(2, '0')} type="month" label="MES" spinWheel={spinWheel} />
             <span className="text-3xl text-[#c084fc] font-black mb-8">:</span>
-            <Wheel value={lockYear.toString()} type="year" label="AÑO" />
+            <Wheel value={lockYear.toString()} type="year" label="AÑO" spinWheel={spinWheel} />
           </div>
           <button onClick={handleUnlock} className="w-full bg-transparent border-2 border-[#c084fc] text-[#c084fc] hover:bg-[#c084fc] hover:text-[#0f0720] font-bold py-4 rounded-full text-xl uppercase tracking-widest transition-all">Abrir Diario 🔓</button>
         </div>
+
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes pop-in { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
+          @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+          .animate-pop-in { animation: pop-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+          .animate-shake { animation: shake 0.4s ease-in-out; }
+        `}} />
       </div>
     );
   }
 
   // --- CONTENIDO DE LAS DIAPOSITIVAS ---
   const slidesContent = [
-    // Slide 1
     <div key="s1" className="flex flex-col items-center text-center animate-slide-in w-full max-w-3xl">
       <div className="inline-block px-5 py-1.5 rounded-full bg-[#c084fc]/20 border border-[#c084fc]/30 text-[#c084fc] text-[10px] font-bold tracking-[0.3em] uppercase mb-6 animate-pulse">Feliz Primer Mes</div>
       <h1 className="text-5xl md:text-7xl font-serif text-[#f5f5f5] mb-6">Bienvenida, <span className="text-[#deff9a]">mi Amor</span></h1>
@@ -277,7 +369,6 @@ export default function RomanticWebsite() {
       <p className="text-[#c084fc] text-lg italic">A partir de aquí, navegaremos por nuestra propia línea del tiempo.</p>
     </div>,
 
-    // Slide 2
     <div key="s1_video" className="flex flex-col items-center animate-slide-in w-full max-w-4xl">
       <h2 className="text-4xl font-serif text-[#c084fc] mb-4">Nuestra magia en <span className="text-[#deff9a]">movimiento</span></h2>
       <p className="text-[#daffde] mb-8 text-center text-lg">Porque hay miradas y risas que una foto no puede capturar del todo.</p>
@@ -286,7 +377,6 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
-    // Slide 3
     <div key="s2" className="flex flex-col md:flex-row items-center gap-10 animate-slide-in w-full max-w-5xl">
       <div className="flex-1">
         <h2 className="text-4xl font-serif text-[#c084fc] mb-2">El Reencuentro</h2>
@@ -299,7 +389,6 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
-    // Slide 4
     <div key="s3" className="flex flex-col md:flex-row-reverse items-center gap-10 animate-slide-in w-full max-w-5xl">
       <div className="flex-1">
         <h2 className="text-4xl font-serif text-[#c084fc] mb-2">Ese Beso Inolvidable</h2>
@@ -313,7 +402,6 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
-    // Slide 5
     <div key="s4" className="flex flex-col items-center text-center animate-slide-in w-full max-w-4xl">
       <h2 className="text-5xl font-serif text-[#c084fc] mb-2">Nuestra Fecha Oficial</h2>
       <h3 className="text-3xl text-[#deff9a] mb-8 font-bold">18 de Abril, 2026</h3>
@@ -322,7 +410,6 @@ export default function RomanticWebsite() {
       <p className="text-[#daffde] text-lg">Fue allí donde te pedí que fueras mi novia, y ese "sí" se convirtió en el sonido más bonito que he escuchado nunca.</p>
     </div>,
 
-    // Slide 6
     <div key="s5" className="flex flex-col md:flex-row items-center gap-12 animate-slide-in w-full max-w-5xl">
       <div className="flex-1 text-center">
         <div className="text-8xl md:text-9xl font-black text-[#c084fc] leading-none mb-2">{timeTogether.days}</div>
@@ -344,7 +431,6 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
-    // Slide 7
     <div key="s6" className="flex flex-col items-center animate-slide-in w-full max-w-5xl">
       <h2 className="text-4xl font-serif text-[#f5f5f5] mb-10">Por qué tú</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
@@ -362,14 +448,12 @@ export default function RomanticWebsite() {
       </div>
     </div>,
 
-    // Slide 8
     <div key="s7" className="flex flex-col items-center justify-center text-center animate-slide-in w-full max-w-3xl h-full">
       <div className="text-7xl text-[#c084fc] opacity-50 mb-4">"</div>
       <p className="font-serif text-3xl md:text-5xl italic text-[#f5f5f5] leading-snug mb-8">No buscaba a nadie, pero te vi y supe que eras tú.</p>
       <cite className="text-2xl text-[#deff9a] block">— Por siempre tuyo</cite>
     </div>,
 
-    // Slide 9: Capítulo 2
     <div key="s8" className="flex flex-col items-center text-center animate-slide-in w-full max-w-4xl">
       {(canSeeChapter2 || modoEdicion) ? (
         <div className="bg-[#1a0d35] border border-[#deff9a]/50 p-10 rounded-[2rem] shadow-[0_0_30px_rgba(222,255,154,0.2)] relative">
@@ -422,50 +506,10 @@ export default function RomanticWebsite() {
       </footer>
 
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
         @keyframes spin-slow { 100% { transform: rotate(360deg); } }
-        @keyframes pop-in { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-        @keyframes slide-in { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        
-        /* Nuevas Animaciones Cinemáticas */
-        @keyframes cinematic-bg {
-          0%, 100% { transform: scale(1) translate(0px, 0px); }
-          50% { transform: scale(1.08) translate(8px, -8px); }
-        }
-        @keyframes float-up {
-          0% { transform: translateY(10vh) scale(0) rotate(0deg); opacity: 0; }
-          10% { opacity: 0.6; }
-          90% { opacity: 0.6; }
-          100% { transform: translateY(-110vh) scale(1) rotate(360deg); opacity: 0; }
-        }
-        @keyframes dynamic-glow {
-          0%, 100% { box-shadow: 0 0 30px rgba(192,132,252,0.25), inset 0 0 15px rgba(192,132,252,0.1); border-color: rgba(192,132,252,0.3); }
-          50% { box-shadow: 0 0 55px rgba(222,255,154,0.35), inset 0 0 20px rgba(222,255,154,0.1); border-color: rgba(222,255,154,0.5); }
-        }
-        @keyframes shimmer-text {
-          0% { bg-position: 0% 50%; }
-          50% { bg-position: 100% 50%; }
-          100% { bg-position: 0% 50%; }
-        }
-        @keyframes pulse-slow {
-          0%, 100% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.15); opacity: 0.6; }
-        }
-        
-        .animate-float { animation: float 4s ease-in-out infinite; }
+        @keyframes slide-in { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
         .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-        .animate-pop-in { animation: pop-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-slide-in { animation: slide-in 0.6s ease-out forwards; }
-        .animate-shake { animation: shake 0.4s ease-in-out; }
-        .animate-heartbeat { animation: heartbeat 2.5s ease-in-out infinite; }
-        
-        .animate-cinematic-bg { animation: cinematic-bg 22s ease-in-out infinite; }
-        .animate-float-up { animation: float-up linear infinite; }
-        .animate-dynamic-glow { animation: dynamic-glow 5s ease-in-out infinite; }
-        .animate-shimmer-text { animation: shimmer-text 4s ease infinite; }
-        .animate-pulse-slow { animation: pulse-slow 6s ease-in-out infinite; }
       `}} />
     </div>
   );
