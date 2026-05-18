@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 
 // --- FECHAS CLAVE ---
-const picnicDate = new Date(2026, 3, 18, 0, 0, 0); // 18 de Abril de 2026 (Para el contador)
-const chapter1Date = new Date(2026, 4, 18, 0, 0, 0); // 18 de Mayo de 2026 (Desbloquea el Capítulo 1)
-const chapter2Date = new Date(2026, 5, 18, 0, 0, 0); // 18 de Junio de 2026 (Desbloquea el Capítulo 2)
+const picnicDate = new Date(2026, 3, 18, 0, 0, 0); // 18 de Abril de 2026 (Para el contador del tiempo juntos)
+const chapter1Date = new Date(2026, 4, 18, 12, 0, 0); // 18 de Mayo de 2026 a las 12:00 del mediodía
+const chapter2Date = new Date(2026, 5, 18, 12, 0, 0); // 18 de Junio de 2026 a las 12:00 del mediodía
 
 export default function RomanticWebsite() {
   // --- ESTADO SECRETO DE ADMINISTRADOR ---
@@ -21,20 +21,33 @@ export default function RomanticWebsite() {
   // --- ESTADOS DE NAVEGACIÓN Y TIEMPO ---
   const [step, setStep] = useState(0);
   const [timeTogether, setTimeTogether] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [waitTimer, setWaitTimer] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isPlaying, setIsPlaying] = useState(false);
+  const [particles, setParticles] = useState<{ id: number; left: string; delay: string; size: string; duration: string }[]>([]);
   
   // Estados de validación de fechas reales
   const [canSeeChapter1, setCanSeeChapter1] = useState(false);
   const [canSeeChapter2, setCanSeeChapter2] = useState(false);
   
-  // SOLUCIÓN: Le decimos a TSX que esto es un elemento de audio o nulo
+  // Referencia del audio para TypeScript
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Generador de partículas para simular overlay de video mágico
+  useEffect(() => {
+    const generated = Array.from({ length: 25 }).map((_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 6}s`,
+      size: `${Math.random() * 14 + 6}px`,
+      duration: `${Math.random() * 7 + 5}s`,
+    }));
+    setParticles(generated);
+  }, []);
 
   // 1. Efecto para detectar si entraste con tu link secreto
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      // Si la URL termina en ?admin=true, se activa tu modo dios
       if (params.get("admin") === "true") {
         setModoEdicion(true);
       }
@@ -44,17 +57,39 @@ export default function RomanticWebsite() {
   // 2. Verificador de fecha real
   useEffect(() => {
     const now = new Date();
-    // Usamos .getTime() para compatibilidad estricta con TypeScript
     if (now.getTime() >= chapter1Date.getTime()) setCanSeeChapter1(true);
     if (now.getTime() >= chapter2Date.getTime()) setCanSeeChapter2(true);
   }, []);
 
-  // Contador de tiempo
+  // 3. Contador regresivo para la PANTALLA DE ESPERA (Capítulo 1)
+  useEffect(() => {
+    if (canSeeChapter1 || modoEdicion) return;
+
+    const waitInterval = setInterval(() => {
+      const now = new Date();
+      const difference = chapter1Date.getTime() - now.getTime();
+
+      if (difference <= 0) {
+        setCanSeeChapter1(true);
+        clearInterval(waitInterval);
+      } else {
+        setWaitTimer({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(waitInterval);
+  }, [canSeeChapter1, modoEdicion]);
+
+  // 4. Contador de tiempo juntos (Cuando ya está abierto el candado)
   useEffect(() => {
     if (!isUnlocked) return;
     const timer = setInterval(() => {
       const now = new Date();
-      // Corrección para error de TypeScript
       const difference = now.getTime() - picnicDate.getTime();
       setTimeTogether({
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -69,13 +104,11 @@ export default function RomanticWebsite() {
   const toggleMusic = () => {
     if (audioRef.current) {
       if (isPlaying) audioRef.current.pause();
-      // Tipamos la 'e' como 'unknown' o 'any' para evitar errores estrictos
       else audioRef.current.play().catch((e: unknown) => console.log("Audio bloqueado", e));
       setIsPlaying(!isPlaying);
     }
   };
 
-  // Tipamos explícitamente los parámetros para evitar errores 'any' implícitos
   const spinWheel = (type: 'day' | 'month' | 'year', direction: number) => {
     if (type === 'day') setLockDay(prev => prev + direction > 31 ? 1 : prev + direction < 1 ? 31 : prev + direction);
     else if (type === 'month') setLockMonth(prev => prev + direction > 12 ? 1 : prev + direction < 1 ? 12 : prev + direction);
@@ -87,7 +120,6 @@ export default function RomanticWebsite() {
     else { setErrorMsg(true); setTimeout(() => setErrorMsg(false), 800); }
   };
 
-  // Tipamos las propiedades del componente Wheel para TSX
   const Wheel = ({ value, type, label }: { value: string, type: 'day' | 'month' | 'year', label: string }) => (
     <div className="flex flex-col items-center">
       <button onClick={() => spinWheel(type, 1)} className="text-[#c084fc] hover:text-[#deff9a] text-3xl mb-2 transition-all hover:-translate-y-1">▲</button>
@@ -99,16 +131,107 @@ export default function RomanticWebsite() {
     </div>
   );
 
-  // --- PANTALLA 0: BLOQUEO TEMPORAL ---
+  // --- PANTALLA 0: BLOQUEO CINEMÁTICO MODO VIDEO ---
   if (!canSeeChapter1 && !modoEdicion) {
     return (
-      <div className="min-h-screen bg-[#0f0720] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(192,132,252,0.05)_0%,_transparent_70%)] z-0" />
-        <div className="z-10 bg-[#1a0d35]/50 border-2 border-dashed border-[#c084fc]/40 p-12 rounded-[3rem] text-center max-w-xl w-full animate-pop-in">
-          <div className="text-6xl mb-6 opacity-50 animate-float">⏳</div>
-          <h1 className="text-4xl font-serif text-[#f5f5f5] mb-4">Aún no es el momento...</h1>
-          <p className="text-[#daffde] text-lg mb-2">Este regalo está programado para abrirse en nuestra fecha especial.</p>
-          <p className="text-[#c084fc] text-lg font-bold">¡Vuelve mañana, 18 de Mayo, para descubrirlo!</p>
+      <div className="min-h-screen bg-[#06030d] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+        
+        {/* Fondo con Movimiento de Cámara (Ken Burns Effect) */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,_rgba(147,51,234,0.25)_0%,_transparent_60%),_radial-gradient(circle_at_80%_80%,_rgba(222,255,154,0.1)_0%,_transparent_50%)] z-0 pointer-events-none animate-cinematic-bg" />
+        
+        {/* Ondas expansivas de pulso */}
+        <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
+          <div className="absolute w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#c084fc]/5 rounded-full animate-pulse-slow"></div>
+          <div className="absolute w-[450px] md:w-[750px] h-[450px] md:h-[750px] bg-[#deff9a]/5 rounded-full animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+        </div>
+
+        {/* Capa de partículas flotantes estilo Overlay de Video */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+          {particles.map((p) => (
+            <span
+              key={p.id}
+              className="absolute bottom-[-5%] text-[#c084fc]/40 animate-float-up inline-block"
+              style={{
+                left: p.left,
+                animationDelay: p.delay,
+                fontSize: p.size,
+                animationDuration: p.duration,
+              }}
+            >
+              ✨
+            </span>
+          ))}
+        </div>
+        
+        {/* Contenedor Principal con Brillo de Neón Variable */}
+        <div className="z-20 bg-[#0f0720]/70 backdrop-blur-2xl border border-[#c084fc]/30 p-10 md:p-14 rounded-[3rem] text-center max-w-xl w-full animate-pop-in animate-dynamic-glow relative">
+          
+          {/* Línea de escaneo superior estilo reproductor */}
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#deff9a] to-transparent opacity-70 animate-pulse"></div>
+          
+          {/* Ícono central con efecto Flotante y Destello continuo */}
+          <div className="relative inline-block mb-8">
+            <div className="text-7xl md:text-8xl animate-float z-10 relative drop-shadow-[0_0_20px_rgba(192,132,252,0.6)]">⏳</div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl md:text-7xl animate-ping opacity-25 text-[#deff9a]">✨</div>
+          </div>
+
+          {/* Título con Texto Líquido Reluciente */}
+          <h1 className="text-4xl md:text-5xl font-serif text-[#f5f5f5] mb-6 tracking-wide">
+            Aún no es <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c084fc] via-[#deff9a] to-[#c084fc] bg-[length:200%_auto] animate-shimmer-text font-bold">el momento...</span>
+          </h1>
+          
+          <div className="bg-[#06030d]/80 rounded-3xl p-6 border border-[#c084fc]/20 mb-8 shadow-[inset_0_4px_20px_rgba(0,0,0,0.6)]">
+            <p className="text-[#daffde] text-lg mb-2 font-medium tracking-wide">Este regalo está mágicamente sellado.</p>
+            <p className="text-[#f5f5f5]/70 text-sm italic font-serif">"Las mejores historias requieren paciencia, y la nuestra vale cada segundo de espera."</p>
+            
+            {/* Marcadores de Tiempo Dinámicos (Estilo Video Player) */}
+            <div className="mt-8 border-t border-[#c084fc]/20 pt-6">
+              <p className="text-[#c084fc] text-xs uppercase tracking-[0.2em] font-black mb-4 opacity-90">El candado se revelará en:</p>
+              
+              <div className="flex justify-center gap-3 md:gap-4">
+                {waitTimer.days > 0 && (
+                  <>
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl md:text-3xl font-mono font-bold text-[#deff9a] bg-[#12072b] w-14 md:w-16 py-3 rounded-2xl border border-[#c084fc]/40 shadow-[0_8px_20px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                        <span className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></span>
+                        {waitTimer.days.toString().padStart(2, '0')}
+                      </span>
+                      <span className="text-[9px] text-[#c084fc] mt-2 font-black tracking-widest">DÍAS</span>
+                    </div>
+                    <span className="text-2xl text-[#c084fc] pt-3 animate-pulse font-black">:</span>
+                  </>
+                )}
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl md:text-3xl font-mono font-bold text-[#deff9a] bg-[#12072b] w-14 md:w-16 py-3 rounded-2xl border border-[#c084fc]/40 shadow-[0_8px_20px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                    <span className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></span>
+                    {waitTimer.hours.toString().padStart(2, '0')}
+                  </span>
+                  <span className="text-[9px] text-[#c084fc] mt-2 font-black tracking-widest">HORAS</span>
+                </div>
+                <span className="text-2xl text-[#c084fc] pt-3 animate-pulse font-black">:</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl md:text-3xl font-mono font-bold text-[#deff9a] bg-[#12072b] w-14 md:w-16 py-3 rounded-2xl border border-[#c084fc]/40 shadow-[0_8px_20px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                    <span className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></span>
+                    {waitTimer.minutes.toString().padStart(2, '0')}
+                  </span>
+                  <span className="text-[9px] text-[#c084fc] mt-2 font-black tracking-widest">MINUTOS</span>
+                </div>
+                <span className="text-2xl text-[#c084fc] pt-3 animate-pulse font-black">:</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl md:text-3xl font-mono font-bold text-[#f5f5f5] bg-[#1a0d35] w-14 md:w-16 py-3 rounded-2xl border border-[#deff9a]/40 shadow-[0_8px_20px_rgba(192,132,252,0.2)] relative overflow-hidden animate-pulse">
+                    <span className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></span>
+                    {waitTimer.seconds.toString().padStart(2, '0')}
+                  </span>
+                  <span className="text-[9px] text-[#deff9a] mt-2 font-black tracking-widest">SEGUNDOS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sello Inferior */}
+          <p className="text-[#deff9a] text-sm font-black uppercase tracking-[0.3em] animate-heartbeat inline-block drop-shadow-[0_0_8px_rgba(222,255,154,0.4)]">
+            🎬 Mañana a las 12:00 PM
+          </p>
         </div>
       </div>
     );
@@ -120,7 +243,6 @@ export default function RomanticWebsite() {
       <div className="min-h-screen bg-[#0f0720] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(192,132,252,0.15)_0%,_transparent_70%)] z-0" />
         
-        {/* Indicador visual para que sepas que estás en tu link secreto */}
         {modoEdicion && (
           <div className="absolute top-4 left-4 bg-red-500/80 backdrop-blur-sm text-white px-4 py-1 rounded-full text-xs font-bold animate-pulse z-50 shadow-[0_0_10px_rgba(239,68,68,0.5)]">
             ⚠️ MODO EDICIÓN ACTIVO (URL SECRETA)
@@ -247,7 +369,7 @@ export default function RomanticWebsite() {
       <cite className="text-2xl text-[#deff9a] block">— Por siempre tuyo</cite>
     </div>,
 
-    // Slide 9: Capítulo 2 (Se salta el bloqueo si estás en Modo Edición)
+    // Slide 9: Capítulo 2
     <div key="s8" className="flex flex-col items-center text-center animate-slide-in w-full max-w-4xl">
       {(canSeeChapter2 || modoEdicion) ? (
         <div className="bg-[#1a0d35] border border-[#deff9a]/50 p-10 rounded-[2rem] shadow-[0_0_30px_rgba(222,255,154,0.2)] relative">
@@ -262,7 +384,7 @@ export default function RomanticWebsite() {
           <div className="text-6xl mb-6 opacity-50">🔒</div>
           <h2 className="text-4xl font-serif text-[#f5f5f5] mb-4">¿Continuamos la historia?</h2>
           <p className="text-[#daffde] text-lg mb-2">Nuestra historia se actualiza cada día 18.</p>
-          <p className="text-[#c084fc] text-lg font-bold">Vuelve a escanear tu llave el 18 de Junio.</p>
+          <p className="text-[#c084fc] text-lg font-bold">Vuelve a escanear tu llave el 18 de Junio a las 12:00 PM.</p>
         </div>
       )}
     </div>
@@ -300,17 +422,50 @@ export default function RomanticWebsite() {
       </footer>
 
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
         @keyframes spin-slow { 100% { transform: rotate(360deg); } }
-        @keyframes pop-in { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes pop-in { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes slide-in { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        
+        /* Nuevas Animaciones Cinemáticas */
+        @keyframes cinematic-bg {
+          0%, 100% { transform: scale(1) translate(0px, 0px); }
+          50% { transform: scale(1.08) translate(8px, -8px); }
+        }
+        @keyframes float-up {
+          0% { transform: translateY(10vh) scale(0) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.6; }
+          90% { opacity: 0.6; }
+          100% { transform: translateY(-110vh) scale(1) rotate(360deg); opacity: 0; }
+        }
+        @keyframes dynamic-glow {
+          0%, 100% { box-shadow: 0 0 30px rgba(192,132,252,0.25), inset 0 0 15px rgba(192,132,252,0.1); border-color: rgba(192,132,252,0.3); }
+          50% { box-shadow: 0 0 55px rgba(222,255,154,0.35), inset 0 0 20px rgba(222,255,154,0.1); border-color: rgba(222,255,154,0.5); }
+        }
+        @keyframes shimmer-text {
+          0% { bg-position: 0% 50%; }
+          50% { bg-position: 100% 50%; }
+          100% { bg-position: 0% 50%; }
+        }
+        @keyframes pulse-slow {
+          0%, 100% { transform: scale(1); opacity: 0.3; }
+          50% { transform: scale(1.15); opacity: 0.6; }
+        }
         
         .animate-float { animation: float 4s ease-in-out infinite; }
         .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-        .animate-pop-in { animation: pop-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-pop-in { animation: pop-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-slide-in { animation: slide-in 0.6s ease-out forwards; }
         .animate-shake { animation: shake 0.4s ease-in-out; }
+        .animate-heartbeat { animation: heartbeat 2.5s ease-in-out infinite; }
+        
+        .animate-cinematic-bg { animation: cinematic-bg 22s ease-in-out infinite; }
+        .animate-float-up { animation: float-up linear infinite; }
+        .animate-dynamic-glow { animation: dynamic-glow 5s ease-in-out infinite; }
+        .animate-shimmer-text { animation: shimmer-text 4s ease infinite; }
+        .animate-pulse-slow { animation: pulse-slow 6s ease-in-out infinite; }
       `}} />
     </div>
   );
