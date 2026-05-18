@@ -62,19 +62,21 @@ export default function RomanticWebsite() {
     const heartsArray: { id: number; x: number; y: number; color: string; scale: number }[] = [];
     let count = 0;
     
-    // Follaje superior (Forma de corazón)
-    for (let i = 0; i < 400; i++) {
+    // Follaje superior (Forma de corazón MÁS GRANDE)
+    // Aumentamos el número de corazones a 500 para cubrir el área más grande
+    for (let i = 0; i < 500; i++) {
       const t = Math.random() * Math.PI * 2;
       const d = Math.sqrt(Math.random()); // Distribución uniforme dentro del corazón
-      const scale = 3.5;
+      // Aumentamos la escala de 3.5 a 4.0
+      const scale = 4.0;
 
       // Ecuación paramétrica del corazón
       const hx = 16 * Math.pow(Math.sin(t), 3);
       const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
 
-      // Centro del corazón en X=100, Y=65
+      // Centro del corazón ajustado. X=100 se mantiene, Y baja ligeramente a 55 para compensar el tamaño
       const x = 100 + d * scale * hx + (Math.random() - 0.5) * 4; 
-      const y = 65 - d * scale * hy + (Math.random() - 0.5) * 4; // Restamos porque SVG Y va hacia abajo
+      const y = 55 - d * scale * hy + (Math.random() - 0.5) * 4; // Restamos porque SVG Y va hacia abajo
 
       heartsArray.push({
         id: count++,
@@ -225,7 +227,7 @@ export default function RomanticWebsite() {
               </p>
             </div>
 
-            {/* ÁRBOL CON FORMA DE CORAZÓN */}
+            {/* ÁRBOL CON FORMA DE CORAZÓN GRANDE */}
             <div className="w-72 h-72 md:w-[26rem] md:h-[26rem] relative flex items-center justify-center flex-shrink-0 animate-gentle-sway">
               <svg viewBox="0 0 200 200" className="w-full h-full overflow-visible">
                 {/* Resplandor trasero */}
